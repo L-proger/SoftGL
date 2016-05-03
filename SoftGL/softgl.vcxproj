@@ -24,6 +24,7 @@
     <ClInclude Include="Buffer.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="DisplayMode.h" />
+    <ClInclude Include="dynamic_buffer.h" />
     <ClInclude Include="FpsCounter.h" />
     <ClInclude Include="IndexBuffer.h" />
     <ClInclude Include="Inline.h" />
@@ -45,11 +46,11 @@
     <ClInclude Include="Quaternion.h" />
     <ClInclude Include="Ray.h" />
     <ClInclude Include="Renderer.h" />
-    <ClInclude Include="Renderer3D.h" />
     <ClInclude Include="RenderWindow.h" />
     <ClInclude Include="RenderWindowXORG.h" />
     <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="Scene.h" />
+    <ClInclude Include="StaticBuffer.h" />
     <ClInclude Include="static_vector.h" />
     <ClInclude Include="Texture2D.h" />
     <ClInclude Include="TextureSampler.h" />
@@ -61,7 +62,6 @@
     <ClInclude Include="Vector3D.h" />
     <ClInclude Include="Vector4D.h" />
     <ClInclude Include="Vertex.h" />
-    <ClInclude Include="VertexBuffer.h" />
     <ClInclude Include="VertexShader.h" />
     <ClInclude Include="Viewport.h" />
     <ClInclude Include="VSDefault.h" />

@@ -12,6 +12,8 @@
 #include "texture_utils.h"
 #include "VSDefault.h"
 #include "PSDefault.h"
+#include "StaticBuffer.h"
+#include <array>
 
 #pragma comment(lib, R"(D:\github\softgl\Debug\softgl.lib)")
 
@@ -40,34 +42,38 @@ int main() {
 	Mat4x4LookAtLH(Vector3D(0.0f, 1.5f, -3.5f), Vector3D(0.0f, 0.5f, 0.0f), Vector3D(0.0f, 1.0f, 0.0f), mView);
 	Mat4x4PerspectiveFOV(3.1415f / 4.0f, (float)sx / (float)sy, 0.1f, 100.0f, mProj);
 
-	Vertex geom[3 * 3];
+	static_buffer<Vertex, 9> vertex_buffer({
+		/*Vertex(Vector4D(-1.0f, 0.0f, -1.0f, 1.0f), Vector2D(0.0f, 1.0f)),
+		Vertex(Vector4D(-1.0f, 0.0f, 1.0f, 1.0f), Vector2D(0.0f, 0.0f)),
+		Vertex(Vector4D(1.0f, 0.0f, 1.0f, 1.0f), Vector2D(1.0f, 0.0f)),
+		Vertex(Vector4D(1.0f, 0.0f, -1.0f, 1.0f), Vector2D(1.0f, 1.0f)),
+		Vertex(Vector4D(0.0f, 1.0f, 0.0f, 1.0f), Vector2D(0.0f, 0.0f)),*/
 
-	geom[0] = Vertex(Vector4D(1.0f, 0.0f, -1.0f, 1.0f), Vector2D(1.0f, 1.0f));
-	geom[1] = Vertex(Vector4D(0.0f, 1.0f, 0.0f, 1.0f), Vector2D(0.0f, 0.0f));
-	geom[2] = Vertex(Vector4D(1.0f, 0.0f, 1.0f, 1.0f), Vector2D(1.0f, 0.0f));
 
-	geom[3] = Vertex(Vector4D(-1.0f, 0.0f, -1.0f, 1.0f), Vector2D(0.0f, 1.0f));
-	geom[4] = Vertex(Vector4D(-1.0f, 0.0f, 1.0f, 1.0f), Vector2D(0.0f, 0.0f));
-	geom[5] = Vertex(Vector4D(1.0f, 0.0f, -1.0f, 1.0f), Vector2D(1.0f, 1.0f));
+		Vertex(Vector4D(-1.0f, 0.0f, -1.0f, 1.0f), Vector2D(0.0f, 1.0f)),
+		Vertex(Vector4D(-1.0f, 0.0f, 1.0f, 1.0f), Vector2D(0.0f, 0.0f)),
+		Vertex(Vector4D(1.0f, 0.0f, 1.0f, 1.0f), Vector2D(1.0f, 0.0f)),
 
-	geom[6] = Vertex(Vector4D(1.0f, 0.0f, -1.0f, 1.0f), Vector2D(1.0f, 1.0f));
-	geom[7] = Vertex(Vector4D(-1.0f, 0.0f, 1.0f, 1.0f), Vector2D(0.0f, 0.0f));
-	geom[8] = Vertex(Vector4D(1.0f, 0.0f, 1.0f, 1.0f), Vector2D(1.0f, 0.0f));
+		Vertex(Vector4D(-1.0f, 0.0f, -1.0f, 1.0f), Vector2D(0.0f, 1.0f)),
+		Vertex(Vector4D(1.0f, 0.0f, 1.0f, 1.0f), Vector2D(1.0f, 0.0f)),
+		Vertex(Vector4D(1.0f, 0.0f, -1.0f, 1.0f), Vector2D(1.0f, 1.0f)),
 
-	VertexBuffer* vb = new VertexBuffer(sizeof(geom), Vertex::stride());
+		Vertex(Vector4D(-1.0f, 0.0f, -1.0f, 1.0f), Vector2D(0.0f, 1.0f)),
+		Vertex(Vector4D(-1.0f, 0.0f, 1.0f, 1.0f), Vector2D(0.0f, 0.0f)),
+		Vertex(Vector4D(0.0f, 1.0f, 0.0f, 1.0f), Vector2D(0.5f, 0.0f))
+	});
 
-	vb->Write(&geom[0], 0, sizeof(geom)); //FIX IT!  Check for overflow!!
+	static_buffer<uint16_t, 9> index_buffer({0,1,2, 0,2,3, 0,1,4});
 
 	InputElement elements[] = {
 		InputElement("POSITION", 0, RT_FLOAT4, 0),
 		InputElement("TEXCOORD", 16, RT_FLOAT2, 0)
 	};
 
-
 	InputLayout* layout = new InputLayout(elements, 2);
 
 	rasterizer.SetInputLayout(layout);
-	rasterizer.SetVertexBuffer(vb, 0);
+	rasterizer.SetVertexBuffer(&vertex_buffer, 0, Vertex::stride());
 
 	rasterizer.SetPrimitiveType(PT_TRIANGLE_LIST);
 

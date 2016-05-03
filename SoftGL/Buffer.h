@@ -2,44 +2,23 @@
 #define Buffer_h__
 
 #include <string.h>
+#include <initializer_list>
+#include <cstdint>
 
-class Buffer
-{
-private:
-	char* data;
-	int size;
+class buffer {
 public:
-	Buffer(int _size)
+	constexpr buffer()
 	{
-		size = _size;
-		if(size>0)
-		{
-			data = new char[size];
-			memset(data,0,size);
-		}
-		else
-			data = 0;
+		
 	}
-	~Buffer()
-	{
-		if(data)
-			delete[] data;
+	virtual ~buffer() = default;
+	void write(void* src, int offset, int length){
+		memcpy((uint8_t*)get_pointer() + offset, src, length);
 	}
-	void Write(void* src, int offset, int length)
-	{
-		memcpy(data + offset, src, length);
+	void read(void* dst, size_t offset, int length){
+		memcpy(dst, (uint8_t*)get_pointer() + offset, length);
 	}
-	void Read(void* dst, int offset, int length)
-	{
-		memcpy(dst, data + offset, length);
-	}
-	void* getDataPtr()
-	{
-		return data;
-	}
-	int Size()
-	{
-		return size;
-	}
+	virtual void* get_pointer() = 0;
+	virtual size_t size() = 0;
 };
 #endif // Buffer_h__

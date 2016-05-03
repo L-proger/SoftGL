@@ -4,7 +4,6 @@
 #include "Texture2D.h"
 #include "LMath.h"
 #include "Viewport.h"
-#include "VertexBuffer.h"
 #include "InputLayout.h"
 #include "VertexShader.h"
 #include "PixelShader.h"
@@ -118,6 +117,8 @@ struct ClipFace
 	RegisterBlock v2;
 };
 
+typedef uint32_t indices_t;
+
 #define MAX_TEX_SLOTS 16
 
 class BlockRasterizer
@@ -140,7 +141,7 @@ public:
     void SetPrimitiveType(int type);
     void Draw(int offset, int length);
     void FixupMapping();
-    void SetVertexBuffer(VertexBuffer* vb, int slot);
+    void SetVertexBuffer(buffer* vb, size_t slot, size_t stride);
     void SetInputLayout(InputLayout* layout);
     void SetPixelShader(PixelShader* shader);
     void SetVertexShader(VertexShader* shader);
@@ -158,7 +159,6 @@ private:
     Vector4D ConvertColor(uint32 color);
     void DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, RegisterBlock r2_src);
 
-
 	Vector4D* r0_in[REG_COUNT];
 	Vector4D* r1_in[REG_COUNT];
 	Vector4D* r2_in[REG_COUNT];
@@ -175,7 +175,13 @@ private:
 	InputLayout* geomLayout;
 	int regMapping[REG_COUNT];
 
-	VertexBuffer* vbSlots[8];
+	struct vertex_buffer_slot{
+		buffer* buffer;
+		size_t stride;
+	};
+
+	vertex_buffer_slot vbSlots[8];
+	buffer* ibSlots[8];
 	VertexShader* vs;
 	PixelShader* ps;
 	int primitiveType;

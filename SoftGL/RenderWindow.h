@@ -76,7 +76,7 @@ public:
 				0,
 				0,
 				tex->height,
-				tex->getBuffer()->getDataPtr(),
+				tex->getBuffer()->get_pointer(),
 				&info,
 				0
 			);

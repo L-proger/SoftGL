@@ -30,7 +30,7 @@ public:
 		}
 		int x = (int)(tx * tex->fwidth);
 		int y = (int)((1.0f - ty) * tex->fheight);
-        uint8* ptr = reinterpret_cast<uint8*>(tex->getBuffer()->getDataPtr());
+        uint8* ptr = reinterpret_cast<uint8*>(tex->getBuffer()->get_pointer());
 		ptr+=(y*tex->width + x)* tex->bpp;
 		color->Z = ((float)ptr[0]) / 255.0f;
 		color->Y = ((float)ptr[1]) / 255.0f;

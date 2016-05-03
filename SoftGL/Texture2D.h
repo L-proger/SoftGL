@@ -1,6 +1,7 @@
 #ifndef Texture2D_h__
 #define Texture2D_h__
-#include "Buffer.h"
+
+#include "dynamic_buffer.h"
 #include "LString.h"
 #include "Bitmap.h"
 #include <stdio.h>
@@ -8,7 +9,7 @@
 class Texture2D
 {
 private:
-	Buffer* data;
+	dynamic_buffer<uint8_t> data;
 public:
 	size_t width;
 	size_t height;
@@ -16,16 +17,10 @@ public:
 	float fwidth;
 	float fheight;
 
-	Texture2D(int _width, int _height, int _bpp)
-	{
-		width = _width;
-		height = _height;
-		bpp = _bpp;
-
-		data = new Buffer(width * height * bpp);
+	Texture2D(size_t _width, size_t _height, int _bpp) : width(_width), height(_height), bpp(_bpp), data(_width * _height * _bpp){
 	}
-	Texture2D(String path)
-	{
+
+	Texture2D(String path){
 		FILE *filePtr; //our file pointer
 		BITMAPFILEHEADER bitmapFileHeader; //our bitmap file header
 		BITMAPINFOHEADER bitmapInfoHeader;
@@ -59,14 +54,10 @@ public:
 		//move file point to the begging of bitmap data
 		fseek(filePtr, bitmapFileHeader.bfOffBits, SEEK_SET);
 
-		//allocate enough memory for the bitmap image data
-		//if(data)
-//			delete data;
-
-		data = new Buffer(bitmapInfoHeader.biWidth * bitmapInfoHeader.biHeight * bitmapInfoHeader.biBitCount / 8);
+		data = dynamic_buffer<uint8_t>(bitmapInfoHeader.biWidth * bitmapInfoHeader.biHeight * bitmapInfoHeader.biBitCount / 8);
 
 		//read in the bitmap image data
-		fread(data->getDataPtr(),bitmapInfoHeader.biWidth * bitmapInfoHeader.biHeight * bitmapInfoHeader.biBitCount / 8, 1,filePtr);
+		fread(data.get_pointer(),bitmapInfoHeader.biWidth * bitmapInfoHeader.biHeight * bitmapInfoHeader.biBitCount / 8, 1, filePtr);
 
 		width = bitmapInfoHeader.biWidth;
 		height = bitmapInfoHeader.biHeight;
@@ -80,9 +71,9 @@ public:
 	{
 
 	}
-	Buffer* getBuffer()
+	buffer* getBuffer()
 	{
-		return data;
+		return &data;
 	}
 };
 #endif // Texture2D_h__

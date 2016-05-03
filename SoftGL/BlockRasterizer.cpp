@@ -176,21 +176,21 @@ void BlockRasterizer::Draw(int offset, int length) {
 	case PT_TRIANGLE_LIST:
 	{
 		int faceCount = length / 3;
-		VertexBuffer* geom = vbSlots[0];
+		buffer* geom = vbSlots[0].buffer;
 
 		if (!faceCount) return;
 		if (!geom) return;
 
-		int stride = geom->Stride();
+		int stride = vbSlots[0].stride;
 
 		//buffer is too small for this draw call
-		if (geom->Size() / stride < faceCount * 3) {
+		if (geom->size() / stride < faceCount * 3) {
 			printf("[Draw] Vertex buffer is too small!\n");
 			return;
 		}
 
 		for (int i = 0; i < faceCount; i++) {
-			char* data = (char*)geom->getDataPtr();
+			char* data = (char*)geom->get_pointer();
 			//setup vertex data pointers
 			char* v0 = data + ((offset + 0 + i * 3) * stride);
 			char* v1 = data + ((offset + 1 + i * 3) * stride);
@@ -237,9 +237,9 @@ void BlockRasterizer::FixupMapping() {
 	}
 }
 
-
-void BlockRasterizer::SetVertexBuffer(VertexBuffer* vb, int slot) {
-	vbSlots[slot] = vb;
+void BlockRasterizer::SetVertexBuffer(buffer* vb, size_t slot, size_t stride) {
+	vbSlots[slot].buffer = vb;
+	vbSlots[slot].stride = stride;
 }
 
 void BlockRasterizer::SetInputLayout(InputLayout* layout) {
@@ -428,9 +428,9 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 	minX &= ~(blockSize - 1);
 	minY &= ~(blockSize - 1);
 
-	uint32_t* bbPtr = reinterpret_cast<uint32_t*>(backBuffer->getBuffer()->getDataPtr());
+	uint32_t* bbPtr = reinterpret_cast<uint32_t*>(backBuffer->getBuffer()->get_pointer());
 
-	float* dbPtr = reinterpret_cast<float*>(depthBuffer->getBuffer()->getDataPtr());
+	float* dbPtr = reinterpret_cast<float*>(depthBuffer->getBuffer()->get_pointer());
 
 	bbPtr += minY * backBuffer->width;
 	dbPtr += minY * depthBuffer->width;
