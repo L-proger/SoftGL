@@ -95,8 +95,6 @@ void BlockRasterizer::ClipToFrustumPlane(Plane plane, ClipVector* src, ClipVecto
 			float alpha_a = PlaneDot(plane, vert[2]->reg[0]) / (PlaneDot(plane, vert[2]->reg[0]) - PlaneDot(plane, vert[0]->reg[0]));
 			float alpha_b = PlaneDot(plane, vert[1]->reg[0]) / (PlaneDot(plane, vert[1]->reg[0]) - PlaneDot(plane, vert[0]->reg[0]));
 
-
-
 			for (int k = 0; k < geomLayout->RegCount; k++) {
 				vA.reg[k] = vert[2]->reg[k] + (vert[0]->reg[k] - vert[2]->reg[k]) * alpha_a;
 				vB.reg[k] = vert[1]->reg[k] + (vert[0]->reg[k] - vert[1]->reg[k]) * alpha_b;
@@ -178,51 +176,104 @@ void BlockRasterizer::Draw(int offset, int length) {
 		int faceCount = length / 3;
 		buffer* geom = vbSlots[0].buffer;
 
-		if (!faceCount) return;
-		if (!geom) return;
+		if (!faceCount){
+			DebugInfo("No faces to draw");
+			return;
+		}
+		if (!geom){
+			DebugError("Vertex buffer is not set");
+			return;
+		}
 
 		int stride = vbSlots[0].stride;
 
 		//buffer is too small for this draw call
 		if (geom->size() / stride < faceCount * 3) {
-			printf("[Draw] Vertex buffer is too small!\n");
+			DebugError("[Draw] Vertex buffer is too small!");
 			return;
 		}
-
+		uint8_t* data = (uint8_t*)geom->get_pointer();
 		for (int i = 0; i < faceCount; i++) {
-			char* data = (char*)geom->get_pointer();
 			//setup vertex data pointers
-			char* v0 = data + ((offset + 0 + i * 3) * stride);
-			char* v1 = data + ((offset + 1 + i * 3) * stride);
-			char* v2 = data + ((offset + 2 + i * 3) * stride);
-
-			int elements = geomLayout->RegCount;
-			for (int i = 0; i < elements; i++) { //TODO: OMG WTF! Fix memory corruption!!!
-				InputElement* e = geomLayout->RegInfo + i;
-				int rd = regMapping[i];
-				r0_in[rd] = reinterpret_cast<Vector4D*>(v0 + e->Offset);
-				r1_in[rd] = reinterpret_cast<Vector4D*>(v1 + e->Offset);
-				r2_in[rd] = reinterpret_cast<Vector4D*>(v2 + e->Offset);
-			}
-			vs->Execute(r0_in, &r0_out.reg[0]);
-			vs->Execute(r1_in, &r1_out.reg[0]);
-			int numInterpolators = vs->Execute(r2_in, &r2_out.reg[0]);
-
-			ClipVector cv;
-			ClipFace cf;
-			cf.v0 = r0_out;
-			cf.v1 = r1_out;
-			cf.v2 = r2_out;
-
-			ClipToFrustum(cf, &cv);
-
-			for (size_t l = 0; l < cv.size(); l++) {
-				ClipFace cf_render = cv[l];
-				DrawTriangle(cf_render.v0, cf_render.v1, cf_render.v2);
-			}
+			uint8_t* v0 = data + ((offset + 0 + i * 3) * stride);
+			uint8_t* v1 = data + ((offset + 1 + i * 3) * stride);
+			uint8_t* v2 = data + ((offset + 2 + i * 3) * stride);
+			draw_impl(v0, v1, v2);
 		}
 	}
 	break;
+	}
+}
+
+void BlockRasterizer::DrawIndexed(size_t index_count, size_t start_index_location)
+{
+	if (index_count == 0) return;
+	switch (primitiveType) {
+	case PT_TRIANGLE_LIST:
+	{
+		int faceCount = index_count / 3;
+		buffer* geom = vbSlots[0].buffer;
+		buffer* indices = ibSlots[0];
+
+		if (!faceCount) {
+			DebugInfo("No faces to draw");
+			return;
+		}
+		if (!geom) {
+			DebugError("Vertex buffer is not set");
+			return;
+		}
+		if (!indices) {
+			DebugError("Index buffer is not set");
+			return;
+		}
+		int stride = vbSlots[0].stride;
+
+		uint8_t* vertex_data = (uint8_t*)geom->get_pointer();
+		auto vertices_count = geom->size() / vbSlots[0].stride;
+		indices_t* index_data = (indices_t*)indices->get_pointer();
+
+		for (size_t i = 0; i < index_count; i+=3) {
+			//setup vertex data pointers
+			auto id0 = index_data[i + 0] + start_index_location;
+			auto id1 = index_data[i + 1] + start_index_location;
+			auto id2 = index_data[i + 2] + start_index_location;
+
+			uint8_t* v0 = vertex_data + id0 * stride;
+			uint8_t* v1 = vertex_data + id1 * stride;
+			uint8_t* v2 = vertex_data + id2 * stride;
+			draw_impl(v0, v1, v2);
+		}
+	}
+	break;
+	}
+}
+
+void BlockRasterizer::draw_impl(void* v0, void* v1, void* v2)
+{
+	int elements = geomLayout->RegCount;
+	for (int i = 0; i < elements; i++) { //TODO: OMG WTF! Fix memory corruption!!!
+		InputElement* e = geomLayout->RegInfo + i;
+		int rd = regMapping[i];
+		r0_in[rd] = reinterpret_cast<Vector4D*>((uint8_t*)v0 + e->Offset);
+		r1_in[rd] = reinterpret_cast<Vector4D*>((uint8_t*)v1 + e->Offset);
+		r2_in[rd] = reinterpret_cast<Vector4D*>((uint8_t*)v2 + e->Offset);
+	}
+	vs->Execute(r0_in, &r0_out.reg[0]);
+	vs->Execute(r1_in, &r1_out.reg[0]);
+	int numInterpolators = vs->Execute(r2_in, &r2_out.reg[0]);
+
+	ClipVector cv;
+	ClipFace cf;
+	cf.v0 = r0_out;
+	cf.v1 = r1_out;
+	cf.v2 = r2_out;
+
+	ClipToFrustum(cf, &cv);
+
+	for (size_t l = 0; l < cv.size(); l++) {
+		ClipFace cf_render = cv[l];
+		DrawTriangle(cf_render.v0, cf_render.v1, cf_render.v2);
 	}
 }
 
@@ -240,6 +291,10 @@ void BlockRasterizer::FixupMapping() {
 void BlockRasterizer::SetVertexBuffer(buffer* vb, size_t slot, size_t stride) {
 	vbSlots[slot].buffer = vb;
 	vbSlots[slot].stride = stride;
+}
+
+void BlockRasterizer::set_index_buffer(buffer* ib, size_t slot){
+	ibSlots[slot] = ib;
 }
 
 void BlockRasterizer::SetInputLayout(InputLayout* layout) {

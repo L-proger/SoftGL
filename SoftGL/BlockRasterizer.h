@@ -15,6 +15,9 @@
 #include "Inline.h"
 #include "Plane.h"
 #include "static_vector.h"
+#include "RasterizerSettings.h"
+#include <array>
+#include "Debug.h"
 
 #define REG_COUNT 5
 
@@ -117,14 +120,10 @@ struct ClipFace
 	RegisterBlock v2;
 };
 
-typedef uint32_t indices_t;
 
-#define MAX_TEX_SLOTS 16
 
-class BlockRasterizer
-{
+class BlockRasterizer {
 public:
-    //typedef std::vector<ClipFace> ClipVector;
 	typedef Static_vector<ClipFace, 2> ClipVector;
 
     BlockRasterizer();
@@ -140,8 +139,11 @@ public:
 
     void SetPrimitiveType(int type);
     void Draw(int offset, int length);
+	void DrawIndexed(size_t index_count, size_t start_index_location);
     void FixupMapping();
     void SetVertexBuffer(buffer* vb, size_t slot, size_t stride);
+	void set_index_buffer(buffer* ib, size_t slot);
+
     void SetInputLayout(InputLayout* layout);
     void SetPixelShader(PixelShader* shader);
     void SetVertexShader(VertexShader* shader);
@@ -150,6 +152,7 @@ public:
 
     float GetBlendAlpha(BLEND_SOURCE src, const Vector4D& srcColor, const Vector4D& dstColor);
 private:
+	void draw_impl(void* v0, void* v1, void* v2);
     Texture2D* tex_slots[MAX_TEX_SLOTS];
 
     IRenderWindow* render_window;
@@ -180,8 +183,8 @@ private:
 		size_t stride;
 	};
 
-	vertex_buffer_slot vbSlots[8];
-	buffer* ibSlots[8];
+	std::array<vertex_buffer_slot, 8> vbSlots;
+	std::array<buffer*, 8> ibSlots;
 	VertexShader* vs;
 	PixelShader* ps;
 	int primitiveType;

@@ -23,6 +23,7 @@
     <ClInclude Include="BlockRasterizer.h" />
     <ClInclude Include="Buffer.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="Debug.h" />
     <ClInclude Include="DisplayMode.h" />
     <ClInclude Include="dynamic_buffer.h" />
     <ClInclude Include="FpsCounter.h" />
@@ -44,6 +45,7 @@
     <ClInclude Include="PSFont.h" />
     <ClInclude Include="PSTextured.h" />
     <ClInclude Include="Quaternion.h" />
+    <ClInclude Include="RasterizerSettings.h" />
     <ClInclude Include="Ray.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="RenderWindow.h" />

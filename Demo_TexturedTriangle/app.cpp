@@ -42,28 +42,15 @@ int main() {
 	Mat4x4LookAtLH(Vector3D(0.0f, 1.5f, -3.5f), Vector3D(0.0f, 0.5f, 0.0f), Vector3D(0.0f, 1.0f, 0.0f), mView);
 	Mat4x4PerspectiveFOV(3.1415f / 4.0f, (float)sx / (float)sy, 0.1f, 100.0f, mProj);
 
-	static_buffer<Vertex, 9> vertex_buffer({
-		/*Vertex(Vector4D(-1.0f, 0.0f, -1.0f, 1.0f), Vector2D(0.0f, 1.0f)),
+	static_buffer<Vertex, 5> vertex_buffer({
+		Vertex(Vector4D(-1.0f, 0.0f, -1.0f, 1.0f), Vector2D(0.0f, 1.0f)),
 		Vertex(Vector4D(-1.0f, 0.0f, 1.0f, 1.0f), Vector2D(0.0f, 0.0f)),
 		Vertex(Vector4D(1.0f, 0.0f, 1.0f, 1.0f), Vector2D(1.0f, 0.0f)),
 		Vertex(Vector4D(1.0f, 0.0f, -1.0f, 1.0f), Vector2D(1.0f, 1.0f)),
-		Vertex(Vector4D(0.0f, 1.0f, 0.0f, 1.0f), Vector2D(0.0f, 0.0f)),*/
-
-
-		Vertex(Vector4D(-1.0f, 0.0f, -1.0f, 1.0f), Vector2D(0.0f, 1.0f)),
-		Vertex(Vector4D(-1.0f, 0.0f, 1.0f, 1.0f), Vector2D(0.0f, 0.0f)),
-		Vertex(Vector4D(1.0f, 0.0f, 1.0f, 1.0f), Vector2D(1.0f, 0.0f)),
-
-		Vertex(Vector4D(-1.0f, 0.0f, -1.0f, 1.0f), Vector2D(0.0f, 1.0f)),
-		Vertex(Vector4D(1.0f, 0.0f, 1.0f, 1.0f), Vector2D(1.0f, 0.0f)),
-		Vertex(Vector4D(1.0f, 0.0f, -1.0f, 1.0f), Vector2D(1.0f, 1.0f)),
-
-		Vertex(Vector4D(-1.0f, 0.0f, -1.0f, 1.0f), Vector2D(0.0f, 1.0f)),
-		Vertex(Vector4D(-1.0f, 0.0f, 1.0f, 1.0f), Vector2D(0.0f, 0.0f)),
-		Vertex(Vector4D(0.0f, 1.0f, 0.0f, 1.0f), Vector2D(0.5f, 0.0f))
+		Vertex(Vector4D(0.0f, 1.0f, 0.0f, 1.0f), Vector2D(0.0f, 0.0f)),
 	});
 
-	static_buffer<uint16_t, 9> index_buffer({0,1,2, 0,2,3, 0,1,4});
+	static_buffer<indices_t, 9> index_buffer({0,1,2, 0,2,3, 0,1,4});
 
 	InputElement elements[] = {
 		InputElement("POSITION", 0, RT_FLOAT4, 0),
@@ -74,6 +61,7 @@ int main() {
 
 	rasterizer.SetInputLayout(layout);
 	rasterizer.SetVertexBuffer(&vertex_buffer, 0, Vertex::stride());
+	rasterizer.set_index_buffer(&index_buffer, 0);
 
 	rasterizer.SetPrimitiveType(PT_TRIANGLE_LIST);
 
@@ -104,7 +92,7 @@ int main() {
 		texture_utils::fill<uint32_t>(backBuffer, 0x000000ff);
 		texture_utils::fill<float>(depthBuffer, 1.0f);
 
-		rasterizer.Draw(0, 9);
+		rasterizer.DrawIndexed(9, 0);
 		wnd->Present(backBuffer);
 
 		frames++;
