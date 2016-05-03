@@ -16,6 +16,18 @@ public:
 	virtual Vector4D Execute(Vector4D* input) = 0;
 	void tex2D(Texture2D* tex, Vector4D* color, float tx, float ty)
 	{
+		if(tx > 1.0f){
+			tx = 1.0f;
+		}
+		if (tx < 0.0f) {
+			tx = 0.0f;
+		}
+		if (ty > 1.0f) {
+			ty = 1.0f;
+		}
+		if (ty < 0.0f) {
+			ty = 0.0f;
+		}
 		int x = (int)(tx * tex->fwidth);
 		int y = (int)((1.0f - ty) * tex->fheight);
         uint8* ptr = reinterpret_cast<uint8*>(tex->getBuffer()->getDataPtr());

@@ -318,8 +318,7 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 	float iw1 = 1.0f / p1->reg[0].W;
 	float iw2 = 1.0f / p2->reg[0].W;
 
-	//save camera space z-coord for future computations (fog, etc)
-	Vector3D camZ(p0->reg[0].Z, p1->reg[0].Z, p2->reg[0].Z);
+	
 
 	//transform vertices to viewport space
 	p0->reg[0].X = (p0->reg[0].X * iw0) * scrW_h + scrW_h;
@@ -334,6 +333,7 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 	p2->reg[0].Y = (p2->reg[0].Y * iw2) * scrH_h + scrH_h;
 	p2->reg[0].Z = (p2->reg[0].Z * iw2);
 
+	Vector3D camZ(p0->reg[0].Z, p1->reg[0].Z, p2->reg[0].Z);
 
 	bool disableCulling = false;
 	if (disableCulling)
@@ -428,8 +428,12 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 	minX &= ~(blockSize - 1);
 	minY &= ~(blockSize - 1);
 
-	int* bbPtr = reinterpret_cast<int*>(backBuffer->getBuffer()->getDataPtr());
+	uint32_t* bbPtr = reinterpret_cast<uint32_t*>(backBuffer->getBuffer()->getDataPtr());
+
+	float* dbPtr = reinterpret_cast<float*>(depthBuffer->getBuffer()->getDataPtr());
+
 	bbPtr += minY * backBuffer->width;
+	dbPtr += minY * depthBuffer->width;
 
 	int C1 = Dy12*x1 - Dx12*y1;
 	int C2 = Dy23*x2 - Dx23*y2;
@@ -441,6 +445,7 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 	if (Dy23 > 0 || (Dy23 == 0 && Dx23 > 0)) C2--;
 	if (Dy31 > 0 || (Dy31 == 0 && Dx31 > 0)) C3--;
 
+	//scan all blocks
 	for (int y = minY; y < maxY; y += blockSize) {
 		for (int x = minX; x < maxX; x += blockSize) {
 			//find block corners
@@ -472,7 +477,8 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 			if (a == 0 || b == 0 || c == 0)
 				continue;
 
-			int* colorBuffer = bbPtr;
+			uint32_t* colorBuffer = bbPtr;
+			float* zBuffer = dbPtr;
 
 			//Whole block is inside triangle!
 			if (a == 0xf && b == 0xf && c == 0xf) {
@@ -485,45 +491,38 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 						//compute 1/w value for perspective correction
 						pc = 1.0f / (invW.X + invW.Y + invW.Z);
 
-						//interpolate registers
-						for (int r = 1; r < REG_COUNT; r++) {
-							r_ps.reg[r] = p0->reg[r] * invW.X + p1->reg[r] * invW.Y + p2->reg[r] * invW.Z;
-							r_ps.reg[r] *= pc; //add perspective correction
+						//interpolate Z
+						float z_interp = p0->reg[0].Z * invW.X + p1->reg[0].Z * invW.Y + p2->reg[0].Z * invW.Z;
+						z_interp *= pc;
+
+						if(zBuffer[bx] > z_interp)
+						{
+							zBuffer[bx] = z_interp;
+							//interpolate registers
+							for (int r = 1; r < REG_COUNT; r++) {
+								r_ps.reg[r] = p0->reg[r] * invW.X + p1->reg[r] * invW.Y + p2->reg[r] * invW.Z;
+								r_ps.reg[r] *= pc; //add perspective correction
+							}
+
+							Vector4D pixel_color = ps->Execute(&r_ps.reg[0]);
+
+							if (blendState.BlendEnable) {
+								uint32 dc = colorBuffer[bx];
+
+								Vector4D dstColor = ConvertColor(dc);
+
+								//get source alpha
+								float srcAlpha = GetBlendAlpha(blendState.SrcAlpha, pixel_color, dstColor);
+								float dstAlpha = GetBlendAlpha(blendState.DstAlpha, pixel_color, dstColor);
+
+								pixel_color = pixel_color * srcAlpha + dstColor * dstAlpha;
+							}
+
+							colorBuffer[bx] = ConvertColor(pixel_color);
 						}
-
-						//interpolate camera Z
-						float cam_interp =
-							camZ.X * invW.X +
-							camZ.Y * invW.Y +
-							camZ.Z * invW.Z;
-
-						cam_interp *= pc;
-
-
-						//bbPtr[0] = 0xffff00ff;
-						Vector4D rst;
-
-						rst = ps->Execute(&r_ps.reg[0]);
-
-
-						if (blendState.BlendEnable) {
-							uint32 dc = colorBuffer[bx];
-
-							Vector4D dstColor = ConvertColor(dc);
-
-							float srcAlpha;
-							float dstAlpha;
-
-							//get source alpha
-							srcAlpha = GetBlendAlpha(blendState.SrcAlpha, rst, dstColor);
-							dstAlpha = GetBlendAlpha(blendState.DstAlpha, rst, dstColor);
-
-							rst = rst * srcAlpha + dstColor * dstAlpha;
-						}
-
-						colorBuffer[bx] = ConvertColor(rst);
 					}
 					colorBuffer += backBuffer->width;
+					zBuffer += depthBuffer->width;
 				}
 			} else //Partially covered block
 			{
@@ -545,41 +544,41 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 							//compute 1/w value for perspective correction
 							pc = 1.0f / (invW.X + invW.Y + invW.Z);
 
-							//interpolate registers
-							for (int r = 1; r < REG_COUNT; r++) {
-								r_ps.reg[r] = p0->reg[r] * invW.X + p1->reg[r] * invW.Y + p2->reg[r] * invW.Z;
-								r_ps.reg[r] *= pc; //add perspective correction
+							//interpolate Z
+							float z_interp = p0->reg[0].Z * invW.X + p1->reg[0].Z * invW.Y + p2->reg[0].Z * invW.Z;
+							z_interp *= pc;
+
+
+							if (zBuffer[bx] > z_interp) {
+								zBuffer[bx] = z_interp;
+								//interpolate registers
+								for (int r = 1; r < REG_COUNT; r++) {
+									r_ps.reg[r] = p0->reg[r] * invW.X + p1->reg[r] * invW.Y + p2->reg[r] * invW.Z;
+									r_ps.reg[r] *= pc; //add perspective correction
+								}
+
+								Vector4D rst;
+								rst = ps->Execute(&r_ps.reg[0]);
+
+								//UINT texcolor = ConvertColor(rst);
+
+								if (blendState.BlendEnable) {
+									uint32 dc = colorBuffer[bx];
+
+									Vector4D dstColor = ConvertColor(dc);
+
+									float srcAlpha;
+									float dstAlpha;
+
+									//get source alpha
+									srcAlpha = GetBlendAlpha(blendState.SrcAlpha, rst, dstColor);
+									dstAlpha = GetBlendAlpha(blendState.DstAlpha, rst, dstColor);
+
+									rst = rst * srcAlpha + dstColor * dstAlpha;
+								}
+
+								colorBuffer[bx] = ConvertColor(rst);
 							}
-
-							//interpolate camera Z
-							float cam_interp =
-								camZ.X * invW.X +
-								camZ.Y * invW.Y +
-								camZ.Z * invW.Z;
-
-							cam_interp *= pc;
-
-							Vector4D rst;
-							rst = ps->Execute(&r_ps.reg[0]);
-
-							//UINT texcolor = ConvertColor(rst);
-
-							if (blendState.BlendEnable) {
-								uint32 dc = colorBuffer[bx];
-
-								Vector4D dstColor = ConvertColor(dc);
-
-								float srcAlpha;
-								float dstAlpha;
-
-								//get source alpha
-								srcAlpha = GetBlendAlpha(blendState.SrcAlpha, rst, dstColor);
-								dstAlpha = GetBlendAlpha(blendState.DstAlpha, rst, dstColor);
-
-								rst = rst * srcAlpha + dstColor * dstAlpha;
-							}
-
-							colorBuffer[bx] = ConvertColor(rst);
 						}
 
 						CX1 -= FDy12;
@@ -591,9 +590,11 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 					CY3 += FDx31;
 
 					colorBuffer += backBuffer->width;
+					zBuffer += depthBuffer->width;
 				}
 			}
 		}
 		bbPtr += backBuffer->width * blockSize;
+		dbPtr += depthBuffer->width * blockSize;
 	}
 }

@@ -261,7 +261,7 @@ static INLINE void Mat3x3Rotation(float angle, Matrix3x3& matrix)
             result->X = (((vector->Y * transformation->M21) + (vector->X * transformation->M11)) + (vector->Z * transformation->M31)) + transformation->M41;
             result->Y = (((vector->Y * transformation->M22) + (vector->X * transformation->M12)) + (vector->Z * transformation->M32)) + transformation->M42;
             result->Z = (((vector->Y * transformation->M23) + (vector->X * transformation->M13)) + (vector->Z * transformation->M33)) + transformation->M43;
-            result->W = (((transformation->M24 * vector->Y) + (transformation->M14 * vector->X)) + (vector->Z * transformation->M34)) + transformation->M44;
+            result->W = (((vector->Y * transformation->M24) + (transformation->M14 * vector->X)) + (vector->Z * transformation->M34)) + transformation->M44;
         }
 
         static INLINE float Vec3Dot(const Vector3D* left, const Vector3D* right)
@@ -276,11 +276,13 @@ static INLINE void Mat3x3Rotation(float angle, Matrix3x3& matrix)
             vector2.X = (((transformation.M21 * coordinate.Y) + (transformation.M11 * coordinate.X)) + (transformation.M31 * coordinate.Z)) + transformation.M41;
             vector2.Y = (((transformation.M22 * coordinate.Y) + (transformation.M12 * coordinate.X)) + (transformation.M32 * coordinate.Z)) + transformation.M42;
             vector2.Z = (((transformation.M23 * coordinate.Y) + (transformation.M13 * coordinate.X)) + (transformation.M33 * coordinate.Z)) + transformation.M43;
-            float num = (float)(1.0 / ((((transformation.M24 * coordinate.Y) + (transformation.M14 * coordinate.X)) + (transformation.M34 * coordinate.Z)) + transformation.M44));
-            vector2.W = num;
-            vector.X = vector2.X * num;
-            vector.Y = vector2.Y * num;
-            vector.Z = vector2.Z * num;
+			vector2.W = (((transformation.M24 * coordinate.Y) + (transformation.M14 * coordinate.X)) + (transformation.M34 * coordinate.Z)) + transformation.M44;
+
+			vector2.W = 1.0f / vector2.W;
+
+			vector.X = vector2.X * vector2.W;
+			vector.Y = vector2.Y * vector2.W;
+			vector.Z = vector2.Z * vector2.W;
             return vector;
         }
 
