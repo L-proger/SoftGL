@@ -26,7 +26,6 @@ public:
 
 		Vec4Transform(position, wvp);
 		output[0] = position;
-
 		output[1] = (*input)[1];
 
 		return 2;

@@ -3,14 +3,7 @@
 #include <assert.h>
 
 BlockRasterizer::BlockRasterizer()
-	:primitiveType(PT_TRIANGLE_LIST), vs(0), ps(0), geomLayout(0),
-	alpha_test_enable(false), alpha_ref(0.5f), ambient_color(0, 0, 0), ambient_enable(false) {
-
-	Mat4x4Identity(&mWorld);
-	Mat4x4Identity(&mView);
-	Mat4x4Identity(&mProj);
-
-	memset(&ffp_state, 0, sizeof(ffp_state));
+	:primitiveType(PT_TRIANGLE_LIST), vs(0), ps(0), geomLayout(0){
 
 	FixupMapping();
 
@@ -34,18 +27,6 @@ BlockRasterizer::BlockRasterizer()
 
 BlockRasterizer::~BlockRasterizer() {
 
-}
-
-void BlockRasterizer::SetWorldMatrix(const Matrix4x4& m) {
-	mWorld = m;
-}
-
-void BlockRasterizer::SetViewMatrix(const Matrix4x4& m) {
-	mView = m;
-}
-
-void BlockRasterizer::SetProjectionMatrix(const Matrix4x4& m) {
-	mProj = m;
 }
 
 int BlockRasterizer::GetPointNDCZone(const Vector4D& point) {
@@ -169,12 +150,6 @@ void BlockRasterizer::ClipToFrustum(ClipFace face, ClipVector* dst) {
 	ClipToFrustumPlane(NDCPlanes[6], &cv1, dst);
 }
 
-void BlockRasterizer::SetFog(const FFPFog& fog) {
-	ffp_state.fog = fog;
-	if (fog.start < 0.0f || fog.end < fog.start)
-		ffp_state.fog.enabled = false;
-}
-
 Texture2D* BlockRasterizer::GetBackBuffer() {
 	return backBuffer;
 }
@@ -221,49 +196,8 @@ void BlockRasterizer::Draw(int offset, int length) {
 			char* v1 = data + ((offset + 1 + i * 3) * stride);
 			char* v2 = data + ((offset + 2 + i * 3) * stride);
 
-
-
-			//apply FFP transform
-#ifdef RENDER_FFP
-			//setup register data pointers
 			int elements = geomLayout->RegCount;
-			for (int i = 0; i < elements; i++) {
-				InputElement* e = geomLayout->RegInfo + i;
-				r0_out.reg[i] = *reinterpret_cast<Vector4D*>(v0 + e->Offset);
-				r1_out.reg[i] = *reinterpret_cast<Vector4D*>(v1 + e->Offset);
-				r2_out.reg[i] = *reinterpret_cast<Vector4D*>(v2 + e->Offset);
-			}
-
-			Vector4D v0coord = r0_out.reg[0];
-			v0coord.W = 1.0f;
-
-			Vector4D v1coord = r1_out.reg[0];
-			v1coord.W = 1.0f;
-
-			Vector4D v2coord = r2_out.reg[0];
-			v2coord.W = 1.0f;
-
-			mWVP = mWorld * mView * mProj;
-			Vector4D position;
-
-			position = r0_out.reg[0];
-			position.W = 1.0f;
-			Vec4Transform(position, mWVP);
-			r0_out.reg[0] = position;
-
-			position = r1_out.reg[0];
-			position.W = 1.0f;
-			Vec4Transform(position, mWVP);
-			r1_out.reg[0] = position;
-
-			position = r2_out.reg[0];
-			position.W = 1.0f;
-			Vec4Transform(position, mWVP);
-			r2_out.reg[0] = position;
-#else
-
-			int elements = geomLayout->RegCount;
-			for (int i = 0; i < elements; i++) {
+			for (int i = 0; i < elements; i++) { //TODO: OMG WTF! Fix memory corruption!!!
 				InputElement* e = geomLayout->RegInfo + i;
 				int rd = regMapping[i];
 				r0_in[rd] = reinterpret_cast<Vector4D*>(v0 + e->Offset);
@@ -273,7 +207,6 @@ void BlockRasterizer::Draw(int offset, int length) {
 			vs->Execute(r0_in, &r0_out.reg[0]);
 			vs->Execute(r1_in, &r1_out.reg[0]);
 			int numInterpolators = vs->Execute(r2_in, &r2_out.reg[0]);
-#endif
 
 			ClipVector cv;
 			ClipFace cf;
@@ -295,19 +228,12 @@ void BlockRasterizer::Draw(int offset, int length) {
 
 void BlockRasterizer::FixupMapping() {
 	if (geomLayout != 0) {
-#ifdef RENDER_FFP
-		regMapping[0] = geomLayout->FindElement(FFP_VERTEXELEMENT_POSITION);
-		regMapping[1] = geomLayout->FindElement(FFP_VERTEXELEMENT_TEXCOORD);
-		regMapping[2] = geomLayout->FindElement(FFP_VERTEXELEMENT_NORMAL);
-		regMapping[3] = geomLayout->FindElement(FFP_VERTEXELEMENT_VERTEXCOLOR);
-#else
 		if (vs != 0) {
 			int elements = geomLayout->RegCount;
 			for (int i = 0; i < elements; i++) {
 				regMapping[i] = vs->FindRegister(geomLayout->RegInfo[i].Name);
 			}
 		}
-#endif
 	}
 }
 
@@ -322,20 +248,12 @@ void BlockRasterizer::SetInputLayout(InputLayout* layout) {
 }
 
 void BlockRasterizer::SetPixelShader(PixelShader* shader) {
-#ifdef RENDER_FFP
-	assert(false && "FFP BUILD!");
-#else
 	ps = shader;
-#endif
 }
 
 void BlockRasterizer::SetVertexShader(VertexShader* shader) {
-#ifdef RENDER_FFP
-	assert(false && "FFP BUILD!");
-#else
 	vs = shader;
 	FixupMapping();
-#endif
 }
 
 void BlockRasterizer::SetBlendState(BlendState* state) {
@@ -374,46 +292,6 @@ Vector4D BlockRasterizer::ConvertColor(uint32 color) {
 	float b = (float)((color >> 0) & 0xff) * d;
 
 	return Vector4D(r, g, b, a);
-}
-
-Vector4D BlockRasterizer::FFP_GetPixelColor(Vector4D* input, float z) {
-	Vector4D out_color;
-
-	out_color = Vector4D(1.0f, 1.0f, 1.0f, 1.0f);
-
-	//apply texture
-	if (tex_slots[0] != 0) {
-		Vector4D tc = input[regMapping[1]];
-		out_color = ConvertColor(sample2D(tex_slots[0], tc.X, tc.Y));
-	}
-
-	//apply ambient
-	if (ambient_enable) {
-		out_color.X += ambient_color.X;
-		out_color.Y += ambient_color.Y;
-		out_color.Z += ambient_color.Z;
-	}
-
-
-	//apply fog
-	if (ffp_state.fog.enabled) {
-		if (z >= ffp_state.fog.start) {
-			if (z <= ffp_state.fog.end) //point inside interpolation area
-			{
-				float fog_alpha = (z - ffp_state.fog.start) / (ffp_state.fog.end - ffp_state.fog.start);
-				out_color.X = out_color.X * (1.0f - fog_alpha) + ffp_state.fog.color.X * fog_alpha;
-				out_color.Y = out_color.Y * (1.0f - fog_alpha) + ffp_state.fog.color.Y * fog_alpha;
-				out_color.Z = out_color.Z * (1.0f - fog_alpha) + ffp_state.fog.color.Z * fog_alpha;
-			} else //full fog
-			{
-				out_color.X = ffp_state.fog.color.X;
-				out_color.Y = ffp_state.fog.color.Y;
-				out_color.Z = ffp_state.fog.color.Z;
-			}
-		}
-	}
-
-	return out_color;
 }
 
 void BlockRasterizer::SetTexture(Texture2D* tex, uint8 slot) {
@@ -525,9 +403,6 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 	Vector3D dzdx = A / (float)-C;
 	Vector3D dzdy = B / (float)-C;
 
-
-
-
 	if (maxY < 0)
 		return;
 	if (minY >= backBuffer->height)
@@ -552,8 +427,6 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 
 	minX &= ~(blockSize - 1);
 	minY &= ~(blockSize - 1);
-
-
 
 	int* bbPtr = reinterpret_cast<int*>(backBuffer->getBuffer()->getDataPtr());
 	bbPtr += minY * backBuffer->width;
@@ -629,11 +502,8 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 
 						//bbPtr[0] = 0xffff00ff;
 						Vector4D rst;
-#ifdef RENDER_FFP
-						rst = FFP_GetPixelColor(&r_ps.reg[0], cam_interp);
-#else
+
 						rst = ps->Execute(&r_ps.reg[0]);
-#endif
 
 
 						if (blendState.BlendEnable) {
@@ -651,10 +521,7 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 							rst = rst * srcAlpha + dstColor * dstAlpha;
 						}
 
-						if (!(alpha_test_enable && (rst.W < alpha_ref)))
-							colorBuffer[bx] = ConvertColor(rst);
-
-
+						colorBuffer[bx] = ConvertColor(rst);
 					}
 					colorBuffer += backBuffer->width;
 				}
@@ -692,14 +559,10 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 
 							cam_interp *= pc;
 
-
 							Vector4D rst;
-#ifdef RENDER_FFP
-							rst = FFP_GetPixelColor(&r_ps.reg[0], cam_interp);
-#else
 							rst = ps->Execute(&r_ps.reg[0]);
-#endif
-							//	UINT texcolor = ConvertColor(rst);
+
+							//UINT texcolor = ConvertColor(rst);
 
 							if (blendState.BlendEnable) {
 								uint32 dc = colorBuffer[bx];
@@ -716,8 +579,7 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 								rst = rst * srcAlpha + dstColor * dstAlpha;
 							}
 
-							if (!(alpha_test_enable && (rst.W < alpha_ref)))
-								colorBuffer[bx] = ConvertColor(rst);
+							colorBuffer[bx] = ConvertColor(rst);
 						}
 
 						CX1 -= FDy12;
@@ -734,22 +596,4 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 		}
 		bbPtr += backBuffer->width * blockSize;
 	}
-}
-
-
-
-void BlockRasterizer::SetAlphaTestEnable(bool enable) {
-	alpha_test_enable = true;
-}
-
-void BlockRasterizer::SetAlphaTestRef(float ref) {
-	alpha_ref = ref;
-}
-
-void BlockRasterizer::SetAmbientEnable(bool enable) {
-	ambient_enable = enable;
-}
-
-void BlockRasterizer::SetAmbientColor(const Vector3D& color) {
-	ambient_color = color;
 }

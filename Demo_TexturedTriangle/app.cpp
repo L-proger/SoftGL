@@ -1,16 +1,17 @@
 #include <stdio.h>
 
-#include "../SoftGL/LMath.h"
-#include "../SoftGL/LString.h"
-#include "../SoftGL/Buffer.h"
-#include "../SoftGL/FFP.h"
-#include "../SoftGL/IRenderWindow.h"
-#include "../SoftGL/Plane.h"
-#include "../SoftGL/Texture2D.h"
-#include "../SoftGL/BlockRasterizer.h"
-#include "../SoftGL/RenderWindow.h"
-#include "../SoftGL/Vertex.h"
-#include "../SoftGL/texture_utils.h"
+#include "LMath.h"
+#include "LString.h"
+#include "Buffer.h"
+#include "IRenderWindow.h"
+#include "Plane.h"
+#include "Texture2D.h"
+#include "BlockRasterizer.h"
+#include "RenderWindow.h"
+#include "Vertex.h"
+#include "texture_utils.h"
+#include "VSDefault.h"
+#include "PSDefault.h"
 
 #pragma comment(lib, R"(D:\github\softgl\Debug\softgl.lib)")
 
@@ -34,13 +35,10 @@ int main() {
 	Matrix4x4 mWorld;
 	Matrix4x4 mView;
 	Matrix4x4 mProj;
-	Matrix4x4 mWVP;
 
 	Mat4x4Identity(&mWorld);
 	Mat4x4LookAtLH(Vector3D(0.0f, 1.5f, -3.5f), Vector3D(0.0f, 0.5f, 0.0f), Vector3D(0.0f, 1.0f, 0.0f), mView);
 	Mat4x4PerspectiveFOV(3.1415f / 4.0f, (float)sx / (float)sy, 0.1f, 100.0f, mProj);
-
-	mWVP = mWorld * mView * mProj;
 
 	Vertex geom[3 * 3];
 
@@ -61,8 +59,8 @@ int main() {
 	vb->Write(&geom[0], 0, sizeof(geom)); //FIX IT!  Check for overflow!!
 
 	InputElement elements[] = {
-		InputElement(FFP_VERTEXELEMENT_POSITION, 0, RT_FLOAT4, 0),
-		InputElement(FFP_VERTEXELEMENT_TEXCOORD, 16, RT_FLOAT2, 0)
+		InputElement("POSITION", 0, RT_FLOAT4, 0),
+		InputElement("TEXCOORD", 16, RT_FLOAT2, 0)
 	};
 
 
@@ -73,11 +71,6 @@ int main() {
 
 	rasterizer.SetPrimitiveType(PT_TRIANGLE_LIST);
 
-	rasterizer.SetWorldMatrix(mWorld);
-	rasterizer.SetViewMatrix(mView);
-	rasterizer.SetProjectionMatrix(mProj);
-
-
 	int frames = 0;
 	float angle = 0.0f;
 
@@ -86,11 +79,21 @@ int main() {
 	rasterizer.set_color_buffer(backBuffer);
 	rasterizer.set_depth_buffer(depthBuffer);
 
+	auto vs = new VSDefault();
+	auto ps = new PSDefault();
+
+	ps->diffuse_map = tex;
+
+	rasterizer.SetVertexShader(vs);
+	rasterizer.SetPixelShader(ps);
+
 	while (true) {
 		//update world matrix rotation
 		Mat4x4RotationY(angle, mWorld);
-		rasterizer.SetWorldMatrix(mWorld);
-		mWVP = mWorld * mView * mProj;
+
+		vs->mView = mView;
+		vs->mProj = mProj;
+		vs->mWorld = mWorld;
 
 		texture_utils::fill<uint32_t>(backBuffer, 0x000000ff);
 		texture_utils::fill<float>(depthBuffer, 1.0f);

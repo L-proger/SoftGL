@@ -110,23 +110,6 @@ enum NDCZone
     ZONE_FAR = 5,
     ZONE_NEAR = 6
 };
-struct FFPFog
-{
-	bool enabled;
-	float start;
-	float end;
-	Vector3D color;
-};
-struct FFPState
-{
-	FFPFog fog;
-};
-
-#define RENDER_FFP
-
-#ifdef RENDER_FFP
-#include "FFP.h"
-#endif
 
 struct ClipFace
 {
@@ -145,13 +128,9 @@ public:
 
     BlockRasterizer();
     ~BlockRasterizer();
-    void SetWorldMatrix(const Matrix4x4& m);
-    void SetViewMatrix(const Matrix4x4& m);
-    void SetProjectionMatrix(const Matrix4x4& m);
     int GetPointNDCZone(const Vector4D& point);
     void ClipToFrustumPlane(Plane plane, ClipVector* src, ClipVector* dst);
     void ClipToFrustum(ClipFace face, ClipVector* dst);
-    void SetFog(const FFPFog& fog);
     Texture2D* GetBackBuffer();
     Texture2D* GetDepthBuffer();
 
@@ -168,28 +147,15 @@ public:
     void SetBlendState(BlendState* state);
     void SetTexture(Texture2D* tex, uint8 slot);
 
-    void SetAlphaTestEnable(bool enable);
-    void SetAlphaTestRef(float ref);
-
-    void SetAmbientEnable(bool enable);
-    void SetAmbientColor(const Vector3D& color);
-
     float GetBlendAlpha(BLEND_SOURCE src, const Vector4D& srcColor, const Vector4D& dstColor);
 private:
     Texture2D* tex_slots[MAX_TEX_SLOTS];
 
-    Matrix4x4 mWorld;
-    Matrix4x4 mView;
-    Matrix4x4 mProj;
-    Matrix4x4 mWVP;
-
-    FFPState ffp_state;
     IRenderWindow* render_window;
     Plane NDCPlanes[7];
 
     uint32 ConvertColor(const Vector4D& color);
     Vector4D ConvertColor(uint32 color);
-    Vector4D FFP_GetPixelColor(Vector4D* input, float z);
     void DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, RegisterBlock r2_src);
 
 
@@ -213,13 +179,6 @@ private:
 	VertexShader* vs;
 	PixelShader* ps;
 	int primitiveType;
-
-    bool alpha_test_enable;
-    float alpha_ref;
-
-    bool ambient_enable;
-    Vector3D ambient_color;
-
 
 	Texture2D* backBuffer;
 	Texture2D* depthBuffer;

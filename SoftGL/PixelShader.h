@@ -14,7 +14,7 @@ public:
 
 	}
 	virtual Vector4D Execute(Vector4D* input) = 0;
-	void sample2D(Texture2D* tex, Vector4D* color, float tx, float ty)
+	void tex2D(Texture2D* tex, Vector4D* color, float tx, float ty)
 	{
 		int x = (int)(tx * tex->fwidth);
 		int y = (int)((1.0f - ty) * tex->fheight);

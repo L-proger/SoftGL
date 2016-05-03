@@ -6,6 +6,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "softgl", "SoftGL\softgl.vcxproj", "{C26A3393-5100-439B-8570-45FA48819037}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Demo_TexturedTriangle", "Demo_TexturedTriangle\Demo_TexturedTriangle.vcxproj", "{C6A5DFA2-39B4-4915-8416-06E019CDC0F3}"
+	ProjectSection(ProjectDependencies) = postProject
+		{C26A3393-5100-439B-8570-45FA48819037} = {C26A3393-5100-439B-8570-45FA48819037}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test", "Test\Test.vcxproj", "{A1C45599-EF69-4A5E-8CD0-9DA0D4CE03A4}"
 EndProject

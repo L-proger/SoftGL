@@ -48,7 +48,6 @@ HEADERS += \
     Inline.h \
     IndexBuffer.h \
     FpsCounter.h \
-    FFP.h \
     DisplayMode.h \
     Delegate_base.h \
     Delegate.h \
@@ -56,8 +55,7 @@ HEADERS += \
     Buffer.h \
     BlockRasterizer.h \
     Bitmap.h \
-    TextureSampler.h \
-    FFPLight.h
+    TextureSampler.h
 
 SOURCES += \
     RenderWindowXORG.cpp \

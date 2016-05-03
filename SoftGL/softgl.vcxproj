@@ -24,9 +24,6 @@
     <ClInclude Include="Buffer.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="DisplayMode.h" />
-    <ClInclude Include="event.h" />
-    <ClInclude Include="FFP.h" />
-    <ClInclude Include="FFPLight.h" />
     <ClInclude Include="FpsCounter.h" />
     <ClInclude Include="IndexBuffer.h" />
     <ClInclude Include="Inline.h" />
@@ -72,7 +69,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BlockRasterizer.cpp" />
-    <ClCompile Include="BlockRasterizerTest.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="RenderWindow.cpp" />
   </ItemGroup>

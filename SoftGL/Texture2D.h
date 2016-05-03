@@ -10,9 +10,9 @@ class Texture2D
 private:
 	Buffer* data;
 public:
-	int width;
-	int height;
-	int bpp;
+	size_t width;
+	size_t height;
+	size_t bpp;
 	float fwidth;
 	float fheight;
 
