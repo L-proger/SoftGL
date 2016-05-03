@@ -63,6 +63,25 @@ public:
 	virtual void event_switch_fullscreen() {
 
 	}
+	virtual void Present(Texture2D* tex) override {
+		if (tex->bpp == 4) {
+
+			SetDIBitsToDevice(
+				context,
+				0,
+				0,
+				tex->width,
+				tex->height,
+				0,
+				0,
+				0,
+				tex->height,
+				tex->getBuffer()->getDataPtr(),
+				&info,
+				0
+			);
+		}
+	}
 protected:
 	bool bAltEnterLocked;
 	HINSTANCE g_hInst;
@@ -96,25 +115,7 @@ private:
 	BITMAPINFO info;
 	HDC context;
 
-	virtual void Present(Texture2D* tex) override {
-		if (tex->bpp == 4) {
-			
-			SetDIBitsToDevice(
-				context,
-				0,
-				0,
-				tex->width,
-				tex->height,
-				0,
-				0,
-				0,
-				tex->height,
-				tex->getBuffer()->getDataPtr(),
-				&info,
-				0
-			);
-		}
-	}
+	
 };
 
 #endif

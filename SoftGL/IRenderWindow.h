@@ -10,17 +10,6 @@
 
 class IRenderWindow{
 public:
-	//events
-   /* EVENT(ExitEvent)
-	ExitEvent Event_Quit;
-
-    EVENT1(WindowEvent, IRenderWindow*)
-	WindowEvent Event_Resize;
-	WindowEvent Event_SwitchFullscreen;
-	WindowEvent Event_Deactivate;
-	WindowEvent Event_Activate;*/
-
-
 	virtual ~IRenderWindow(void) {}
 	virtual void Update() = 0;
 	virtual void SetCaption(const String& caption) = 0;

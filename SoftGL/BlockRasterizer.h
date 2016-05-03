@@ -154,6 +154,10 @@ public:
     void SetFog(const FFPFog& fog);
     Texture2D* GetBackBuffer();
     Texture2D* GetDepthBuffer();
+
+	void set_color_buffer(Texture2D* buffer);
+	void set_depth_buffer(Texture2D* buffer);
+
     void SetPrimitiveType(int type);
     void Draw(int offset, int length);
     void FixupMapping();

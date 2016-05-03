@@ -56,6 +56,7 @@
     <ClInclude Include="static_vector.h" />
     <ClInclude Include="Texture2D.h" />
     <ClInclude Include="TextureSampler.h" />
+    <ClInclude Include="texture_utils.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="Tools.h" />
     <ClInclude Include="Types.h" />

@@ -10,29 +10,26 @@
 #include "../SoftGL/BlockRasterizer.h"
 #include "../SoftGL/RenderWindow.h"
 #include "../SoftGL/Vertex.h"
+#include "../SoftGL/texture_utils.h"
 
-#pragma comment(lib, R"(D:\softgl\Debug\softgl.lib)")
+#pragma comment(lib, R"(D:\github\softgl\Debug\softgl.lib)")
 
 int main() {
 	int sx = 640;
 	int sy = 480;
-
-	printf("Test1\n");
 
 	RenderWindow* wnd = new RenderWindow();
 	wnd->SetSize(640, 480);
 	wnd->SetCaption("LOL");
 	wnd->CenterWindow();
 
-	//default back buffer
 	auto backBuffer = new Texture2D(sx, sy, 4);
-	//default depth buffer
-	depthBuffer = new Texture2D(width, height, 4);
+	auto depthBuffer = new Texture2D(sx, sy, 4);
 
 	std::string tex_path = R"(C:\Users\Sergey\Desktop\test.bmp)";
 	Texture2D* tex = new Texture2D(tex_path.c_str());
 
-	BlockRasterizer rasterizer(sx, sy, wnd);
+	BlockRasterizer rasterizer;
 
 	Matrix4x4 mWorld;
 	Matrix4x4 mView;
@@ -59,15 +56,11 @@ int main() {
 	geom[7] = Vertex(Vector4D(-1.0f, 0.0f, 1.0f, 1.0f), Vector2D(0.0f, 0.0f));
 	geom[8] = Vertex(Vector4D(1.0f, 0.0f, 1.0f, 1.0f), Vector2D(1.0f, 0.0f));
 
-	
-
 	VertexBuffer* vb = new VertexBuffer(sizeof(geom), Vertex::stride());
-	
 
 	vb->Write(&geom[0], 0, sizeof(geom)); //FIX IT!  Check for overflow!!
 
-	InputElement elements[] =
-	{
+	InputElement elements[] = {
 		InputElement(FFP_VERTEXELEMENT_POSITION, 0, RT_FLOAT4, 0),
 		InputElement(FFP_VERTEXELEMENT_TEXCOORD, 16, RT_FLOAT2, 0)
 	};
@@ -84,18 +77,14 @@ int main() {
 	rasterizer.SetViewMatrix(mView);
 	rasterizer.SetProjectionMatrix(mProj);
 
-	FFPFog fog;
-	fog.start = 4.0f;
-	fog.end = 11.0f;
-	fog.enabled = true;
-	fog.color = Vector3D(0.0f, 1.0f, 0.0f);
-
-	rasterizer.SetFog(fog);
 
 	int frames = 0;
 	float angle = 0.0f;
 
 	rasterizer.SetTexture(tex, 0);
+
+	rasterizer.set_color_buffer(backBuffer);
+	rasterizer.set_depth_buffer(depthBuffer);
 
 	while (true) {
 		//update world matrix rotation
@@ -103,25 +92,15 @@ int main() {
 		rasterizer.SetWorldMatrix(mWorld);
 		mWVP = mWorld * mView * mProj;
 
-		rasterizer.Clear(0x000000ff);
-
-		/*auto bb = rasterizer.GetBackBuffer();
-		uint32_t* pixels = (uint32_t*)bb->getBuffer()->getDataPtr();
-		for (size_t y = 0; y < bb->height; ++y) {
-		for (size_t x = 0; x < bb->width; ++x) {
-		uint32_t xVal = (x * 0xff) / bb->width;
-		uint32_t yVal = (y * 0xff) / bb->height;
-		pixels[y * bb->width + x] = ((xVal & 0xff) << 16) | ((yVal & 0xff) << 8);
-		}
-		}*/
+		texture_utils::fill<uint32_t>(backBuffer, 0x000000ff);
+		texture_utils::fill<float>(depthBuffer, 1.0f);
 
 		rasterizer.Draw(0, 9);
-		rasterizer.Present();
+		wnd->Present(backBuffer);
 
 		frames++;
-		//fpsCounter.ComputeFPS();
 		angle += 0.1f;
-		if (angle >100000.0f)
+		if (angle > 100000.0f)
 			angle = 0.0f;
 		wnd->Update();
 	}
