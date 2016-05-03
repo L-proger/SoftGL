@@ -1,0 +1,6 @@
+Demo_TexturedTriangle/Debug/
+*.filters
+*.user
+Debug/
+*.suo
+*.db
