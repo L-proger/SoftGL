@@ -3,7 +3,7 @@
 
 #include "IShader.h"
 #include "Texture2D.h"
-#include "Types.h"
+#include <cstdint>
 
 #define CLIP -1231345391
 class PixelShader : public IShader
@@ -28,9 +28,9 @@ public:
 		if (ty < 0.0f) {
 			ty = 0.0f;
 		}
-		int x = (int)(tx * tex->fwidth);
-		int y = (int)((1.0f - ty) * tex->fheight);
-        uint8* ptr = reinterpret_cast<uint8*>(tex->getBuffer()->get_pointer());
+		int x = (int)(tx * (float)tex->width);
+		int y = (int)((1.0f - ty) * (float)tex->height);
+        uint8_t* ptr = reinterpret_cast<uint8_t*>(tex->getBuffer()->get_pointer());
 		ptr+=(y*tex->width + x)* tex->bpp;
 		color->Z = ((float)ptr[0]) / 255.0f;
 		color->Y = ((float)ptr[1]) / 255.0f;

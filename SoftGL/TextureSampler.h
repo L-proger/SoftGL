@@ -1,10 +1,9 @@
 #ifndef TEXTURESAMPLER_H
 #define TEXTURESAMPLER_H
 
-#include "Inline.h"
 #include "Texture2D.h"
 
-static INLINE uint32 sample2D(Texture2D* tex, float tX, float tY)
+static inline uint32_t sample2D(Texture2D* tex, float tX, float tY)
 {
 	if(tex == nullptr)
 	{
@@ -15,26 +14,26 @@ static INLINE uint32 sample2D(Texture2D* tex, float tX, float tY)
 
     tY = 1.0f - tY;
 
-    int x = static_cast<int>((tX * (tex->fwidth - 1.0f)));
-    int y = static_cast<int>((tY * (tex->fheight - 1.0f)));
-    uint8* ptr = reinterpret_cast<uint8*>(tex->getBuffer()->get_pointer());
+    int x = static_cast<int>((tX * ((float)tex->width - 1.0f)));
+    int y = static_cast<int>((tY * ((float)tex->height - 1.0f)));
+    uint8_t* ptr = reinterpret_cast<uint8_t*>(tex->getBuffer()->get_pointer());
 
 
-    float pX = tX * tex->fwidth;
-    float pY = tY * tex->fheight;
+    float pX = tX * (float)tex->width;
+    float pY = tY * (float)tex->height;
 
-    uint32 frX = (uint32)((pX - (float)((int)pX))* 255.0f);
-    uint32 frY = (uint32)((pY - (float)((int)pY))* 255.0f);
+    uint32_t frX = (uint32_t)((pX - (float)((int)pX))* 255.0f);
+    uint32_t frY = (uint32_t)((pY - (float)((int)pY))* 255.0f);
 
-    uint32* ptr2 = reinterpret_cast<uint32*>(tex->getBuffer()->get_pointer());
+    uint32_t* ptr2 = reinterpret_cast<uint32_t*>(tex->getBuffer()->get_pointer());
 
-    uint32 color;
+    uint32_t color;
   //  if(tex->bpp < 4)
   //  {
-        uint32 tl = 0xff000000;
-   /*     uint32 tr = 0xff000000;
-        uint32 rl = 0xff000000;
-        uint32 rr = 0xff000000;*/
+        uint32_t tl = 0xff000000;
+   /*     uint32_t tr = 0xff000000;
+        uint32_t rl = 0xff000000;
+        uint32_t rr = 0xff000000;*/
 
         memcpy(&tl, ptr+ (y*tex->width + x)* tex->bpp, tex->bpp);
         //memcpy(&tr, ptr+ (y*tex->width + x + 1)* tex->bpp, 3);
@@ -71,10 +70,10 @@ static INLINE uint32 sample2D(Texture2D* tex, float tX, float tY)
 
 
 
-        uint32 tl = ptr2[y1 * tex->width + x1];
-        uint32 tr = ptr2[y2 * tex->width + x2];
-        uint32 rl = ptr2[y3 * tex->width + x3];
-        uint32 rr = ptr2[y4 * tex->width + x4];
+        uint32_t tl = ptr2[y1 * tex->width + x1];
+        uint32_t tr = ptr2[y2 * tex->width + x2];
+        uint32_t rl = ptr2[y3 * tex->width + x3];
+        uint32_t rr = ptr2[y4 * tex->width + x4];
 
         color = blendrgb ( blendrgb ( tl, tr, frX), blendrgb ( rl, rr, frX), frY);
     }*/

@@ -6,4 +6,6 @@
 typedef uint32_t indices_t;
 #define MAX_TEX_SLOTS 16
 
+static constexpr size_t InputElementNameLength = 16;
+
 #endif // RasterizerSettings_h__

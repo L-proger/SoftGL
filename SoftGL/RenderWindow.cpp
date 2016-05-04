@@ -53,7 +53,7 @@ RenderWindow::RenderWindow()
 	WS_MAXIMIZEBOX*/
 
 
-	if (!(g_hwnd = CreateWindowEx(NULL, _text("Onotole"), _text("LifeEngine render window"), WS_THICKFRAME,
+	if (!(g_hwnd = CreateWindowEx(NULL, _text("Onotole"), _text("LifeEngine render window"), WS_OVERLAPPEDWINDOW,
 		NewWindowSize.left, NewWindowSize.top, NewWindowSize.right - NewWindowSize.left, NewWindowSize.bottom - NewWindowSize.top, NULL, NULL, g_hInst, NULL))) {
 		MessageBox(g_hwnd, _text("Can not create window! We all gonna die!!"), _text("HOLY SHIT!"), MB_OK);
 	}
@@ -206,8 +206,8 @@ void RenderWindow::CenterWindow() {
 	SetWindowPos(g_hwnd, NULL, nx, ny, -1, -1,
 		SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
 }
-void RenderWindow::SetFullscreenMode(DisplayMode mode) {
-	fsMode = mode;
+void RenderWindow::SetFullscreenMode(DisplayMode _mode) {
+	fsMode = _mode;
 }
 void RenderWindow::SetSize(int w, int h) {
 	if (!IsFullScreen()) {

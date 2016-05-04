@@ -28,7 +28,6 @@
     <ClInclude Include="dynamic_buffer.h" />
     <ClInclude Include="FpsCounter.h" />
     <ClInclude Include="IndexBuffer.h" />
-    <ClInclude Include="Inline.h" />
     <ClInclude Include="InputLayout.h" />
     <ClInclude Include="InputSystem.h" />
     <ClInclude Include="IRenderWindow.h" />
@@ -37,21 +36,17 @@
     <ClInclude Include="LString.h" />
     <ClInclude Include="Matrix3x3.h" />
     <ClInclude Include="Matrix4x4.h" />
-    <ClInclude Include="Mesh.h" />
     <ClInclude Include="PixelShader.h" />
     <ClInclude Include="Plane.h" />
-    <ClInclude Include="Primitive.h" />
     <ClInclude Include="PSDefault.h" />
     <ClInclude Include="PSFont.h" />
     <ClInclude Include="PSTextured.h" />
     <ClInclude Include="Quaternion.h" />
     <ClInclude Include="RasterizerSettings.h" />
     <ClInclude Include="Ray.h" />
-    <ClInclude Include="Renderer.h" />
     <ClInclude Include="RenderWindow.h" />
     <ClInclude Include="RenderWindowXORG.h" />
     <ClInclude Include="ResourceManager.h" />
-    <ClInclude Include="Scene.h" />
     <ClInclude Include="StaticBuffer.h" />
     <ClInclude Include="static_vector.h" />
     <ClInclude Include="Texture2D.h" />
@@ -59,7 +54,6 @@
     <ClInclude Include="texture_utils.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="Tools.h" />
-    <ClInclude Include="Types.h" />
     <ClInclude Include="Vector2D.h" />
     <ClInclude Include="Vector3D.h" />
     <ClInclude Include="Vector4D.h" />
@@ -71,7 +65,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BlockRasterizer.cpp" />
-    <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="RenderWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -146,7 +139,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS;_CRTDBG_MAP_ALLOC</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
     </ClCompile>
     <Link>
@@ -160,7 +153,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS;_CRTDBG_MAP_ALLOC</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
     </ClCompile>
     <Link>

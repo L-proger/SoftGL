@@ -4,7 +4,7 @@
 
 #include "LString.h"
 #include "DisplayMode.h"
-#include "Types.h"
+#include <cstdint>
 #include "Texture2D.h"
 
 

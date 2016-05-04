@@ -1,5 +1,8 @@
-#include <stdio.h>
+#include "vld.h"
 
+
+#include <stdio.h>
+#define _CRTDBG_MAP_ALLOC
 #include "LMath.h"
 #include "LString.h"
 #include "Buffer.h"
@@ -16,8 +19,11 @@
 #include <array>
 
 #pragma comment(lib, R"(D:\github\softgl\Debug\softgl.lib)")
+#pragma comment(lib, "vld.lib")
 
 int main() {
+
+
 	int sx = 640;
 	int sy = 480;
 
@@ -47,22 +53,20 @@ int main() {
 		Vertex(Vector4D(-1.0f, 0.0f, 1.0f, 1.0f), Vector2D(0.0f, 0.0f)),
 		Vertex(Vector4D(1.0f, 0.0f, 1.0f, 1.0f), Vector2D(1.0f, 0.0f)),
 		Vertex(Vector4D(1.0f, 0.0f, -1.0f, 1.0f), Vector2D(1.0f, 1.0f)),
-		Vertex(Vector4D(0.0f, 1.0f, 0.0f, 1.0f), Vector2D(0.0f, 0.0f)),
+		Vertex(Vector4D(0.0f, 1.0f, 0.0f, 1.0f), Vector2D(0.5f, 0.0f)),
 	});
 
 	static_buffer<indices_t, 9> index_buffer({0,1,2, 0,2,3, 0,1,4});
 
-	InputElement elements[] = {
-		InputElement("POSITION", 0, RT_FLOAT4, 0),
-		InputElement("TEXCOORD", 16, RT_FLOAT2, 0)
+	StaticInputLayout<2> layout;
+	layout.elements = {
+		InputElement("POSITION", 0, RegType::float4, 0),
+		InputElement("TEXCOORD", 16, RegType::float2, 0)
 	};
 
-	InputLayout* layout = new InputLayout(elements, 2);
-
-	rasterizer.SetInputLayout(layout);
+	rasterizer.SetInputLayout(&layout);
 	rasterizer.SetVertexBuffer(&vertex_buffer, 0, Vertex::stride());
 	rasterizer.set_index_buffer(&index_buffer, 0);
-
 	rasterizer.SetPrimitiveType(PT_TRIANGLE_LIST);
 
 	int frames = 0;

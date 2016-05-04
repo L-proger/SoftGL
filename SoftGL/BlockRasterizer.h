@@ -12,7 +12,6 @@
 #include "Tools.h"
 #include <vector>
 #include "IRenderWindow.h"
-#include "Inline.h"
 #include "Plane.h"
 #include "static_vector.h"
 #include "RasterizerSettings.h"
@@ -23,51 +22,51 @@
 
 struct RegisterBlock
 {
-	Vector4D reg[REG_COUNT];
+	std::array<Vector4D, REG_COUNT> reg;
 
-    INLINE static void Sub(const RegisterBlock& b1, const RegisterBlock& b2, RegisterBlock& result)
+    inline static void Sub(const RegisterBlock& b1, const RegisterBlock& b2, RegisterBlock& result)
 	{
 		for(int i = 0; i< REG_COUNT; i++)
 		{
 			result.reg[i] = b1.reg[i] - b2.reg[i];
 		}
 	}
-    INLINE static void Add(const RegisterBlock& b1, const RegisterBlock& b2, RegisterBlock& result)
+    inline static void Add(const RegisterBlock& b1, const RegisterBlock& b2, RegisterBlock& result)
 	{
 		for(int i = 0; i< REG_COUNT; i++)
 		{
 			result.reg[i] = b1.reg[i] + b2.reg[i];
 		}
 	}
-    INLINE static void Mul(const RegisterBlock& b1, float val, RegisterBlock& result)
+    inline static void Mul(const RegisterBlock& b1, float val, RegisterBlock& result)
 	{
 		for(int i = 0; i< REG_COUNT; i++)
 		{
 			result.reg[i] = b1.reg[i] * val;
 		}
 	}
-    INLINE static void Div(const RegisterBlock& b1, float val, RegisterBlock& result)
+    inline static void Div(const RegisterBlock& b1, float val, RegisterBlock& result)
 	{
 		for(int i = 0; i< REG_COUNT; i++)
 		{
 			result.reg[i] = b1.reg[i] / val;
 		}
 	}
-    INLINE static void Mul(RegisterBlock& b1, float val)
+    inline static void Mul(RegisterBlock& b1, float val)
 	{
 		for(int i = 0; i< REG_COUNT; i++)
 		{
 			b1.reg[i] *= val;
 		}
 	}
-    INLINE static void Div(RegisterBlock& b1, float val)
+    inline static void Div(RegisterBlock& b1, float val)
 	{
 		for(int i = 0; i< REG_COUNT; i++)
 		{
 			b1.reg[i] /= val;
 		}
 	}
-    INLINE static void Clone(const RegisterBlock& from, RegisterBlock& to)
+    inline static void Clone(const RegisterBlock& from, RegisterBlock& to)
 	{
 		for(int i = 0; i< REG_COUNT; i++)
 		{
@@ -129,8 +128,8 @@ public:
     BlockRasterizer();
     ~BlockRasterizer();
     int GetPointNDCZone(const Vector4D& point);
-    void ClipToFrustumPlane(Plane plane, ClipVector* src, ClipVector* dst);
-    void ClipToFrustum(ClipFace face, ClipVector* dst);
+    void ClipToFrustumPlane(Plane plane, ClipVector& src, ClipVector& dst);
+    void ClipToFrustum(ClipFace face, ClipVector& dst);
     Texture2D* GetBackBuffer();
     Texture2D* GetDepthBuffer();
 
@@ -144,27 +143,27 @@ public:
     void SetVertexBuffer(buffer* vb, size_t slot, size_t stride);
 	void set_index_buffer(buffer* ib, size_t slot);
 
-    void SetInputLayout(InputLayout* layout);
+    void SetInputLayout(IInputLayout* layout);
     void SetPixelShader(PixelShader* shader);
     void SetVertexShader(VertexShader* shader);
     void SetBlendState(BlendState* state);
-    void SetTexture(Texture2D* tex, uint8 slot);
+    void SetTexture(Texture2D* tex, uint8_t slot);
 
     float GetBlendAlpha(BLEND_SOURCE src, const Vector4D& srcColor, const Vector4D& dstColor);
 private:
 	void draw_impl(void* v0, void* v1, void* v2);
-    Texture2D* tex_slots[MAX_TEX_SLOTS];
+	std::array<Texture2D*, MAX_TEX_SLOTS> tex_slots;
 
     IRenderWindow* render_window;
-    Plane NDCPlanes[7];
+	std::array<Plane, 7> NDCPlanes;
 
-    uint32 ConvertColor(const Vector4D& color);
-    Vector4D ConvertColor(uint32 color);
+    uint32_t ConvertColor(const Vector4D& color);
+    Vector4D ConvertColor(uint32_t color);
     void DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, RegisterBlock r2_src);
 
-	Vector4D* r0_in[REG_COUNT];
-	Vector4D* r1_in[REG_COUNT];
-	Vector4D* r2_in[REG_COUNT];
+	std::array<Vector4D*, REG_COUNT> r0_in;
+	std::array<Vector4D*, REG_COUNT> r1_in;
+	std::array<Vector4D*, REG_COUNT> r2_in;
 
 	RegisterBlock r0_out;
 	RegisterBlock r1_out;
@@ -175,8 +174,8 @@ private:
 
 	BlendState blendState;
 
-	InputLayout* geomLayout;
-	int regMapping[REG_COUNT];
+	IInputLayout* geomLayout;
+	std::array<int, REG_COUNT> regMapping;
 
 	struct vertex_buffer_slot{
 		buffer* buffer;

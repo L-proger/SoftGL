@@ -2,6 +2,7 @@
 #define static_vector_h__
 
 #include <cstdint>
+#include "Debug.h"
 
 template<typename T, size_t Capacity>
 class Static_vector {
@@ -43,9 +44,15 @@ public:
 		--_size;
 	}
 	T& operator[](size_t id){
+#if defined(SGL_DEBUG)
+		assert(id < _size, "Invalid index");
+#endif
 		return _buffer[id];
 	}
 	const T& operator[](size_t id) const{
+#if defined(SGL_DEBUG)
+		assert(id < _size, "Invalid index");
+#endif
 		return _buffer[id];
 	}
 	size_t size() const {

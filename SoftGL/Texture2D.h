@@ -6,16 +6,11 @@
 #include "Bitmap.h"
 #include <stdio.h>
 
-class Texture2D
-{
-private:
-	dynamic_buffer<uint8_t> data;
+class Texture2D {
 public:
 	size_t width;
 	size_t height;
 	size_t bpp;
-	float fwidth;
-	float fheight;
 
 	Texture2D(size_t _width, size_t _height, int _bpp) : width(_width), height(_height), bpp(_bpp), data(_width * _height * _bpp){
 	}
@@ -33,12 +28,9 @@ public:
 		//read the bitmap file header
         int read_cnt = fread(&bitmapFileHeader, 1,sizeof(BITMAPFILEHEADER),filePtr);
 
-        if(read_cnt != sizeof(BITMAPFILEHEADER))
-        {
+        if(read_cnt != sizeof(BITMAPFILEHEADER)) {
             printf("EPIC FAIL!\n");
         }
-
-        printf("Size = %i\n", sizeof(BITMAPFILEHEADER));
 
 
 		//verify that this is a bmp file by check bitmap id
@@ -54,15 +46,13 @@ public:
 		//move file point to the begging of bitmap data
 		fseek(filePtr, bitmapFileHeader.bfOffBits, SEEK_SET);
 
-		data = dynamic_buffer<uint8_t>(bitmapInfoHeader.biWidth * bitmapInfoHeader.biHeight * bitmapInfoHeader.biBitCount / 8);
+		data = std::move(dynamic_buffer<uint8_t>(bitmapInfoHeader.biWidth * bitmapInfoHeader.biHeight * bitmapInfoHeader.biBitCount / 8));
 
 		//read in the bitmap image data
 		fread(data.get_pointer(),bitmapInfoHeader.biWidth * bitmapInfoHeader.biHeight * bitmapInfoHeader.biBitCount / 8, 1, filePtr);
 
 		width = bitmapInfoHeader.biWidth;
 		height = bitmapInfoHeader.biHeight;
-		fwidth = (float)width;
-		fheight = (float)height;
 		bpp = bitmapInfoHeader.biBitCount / 8;
 
 		fclose(filePtr);
@@ -75,5 +65,7 @@ public:
 	{
 		return &data;
 	}
+private:
+	dynamic_buffer<uint8_t> data;
 };
 #endif // Texture2D_h__

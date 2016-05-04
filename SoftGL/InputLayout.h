@@ -2,55 +2,57 @@
 #define InputLayout_h__
 
 #include "LString.h"
+#include "RasterizerSettings.h"
+#include "Debug.h"
 
-enum REG_TYPE
-{
-	RT_FLOAT1 = 0,
-	RT_FLOAT2 = 1,
-	RT_FLOAT3 = 2,
-	RT_FLOAT4 = 3
+enum RegType {
+	float1 = 0,
+	float2 = 1,
+	float3 = 2,
+	float4 = 3
 };
 
-struct InputElement
-{
-	String Name;
-	int Offset;
-	REG_TYPE RegType;
-	int StreamId;
+struct InputElement {
+	char name[InputElementNameLength];
+	uint8_t Offset;
+	RegType type;
+	uint8_t StreamId;
 
-	InputElement()
-	{
+	InputElement() :name{0}, Offset(0), type(RegType::float1), StreamId(0){
 
 	}
-	InputElement(const String& name, int offset, REG_TYPE t, int stream)
-	{
-		Name = name;
+	InputElement(const char* _name, uint8_t offset, RegType t, uint8_t stream) {
+		SGL_ASSERT(strlen(_name) < InputElementNameLength, "Too long name for InputElement");
+		strcpy(name, _name);
 		Offset = offset;
-		RegType = t;
+		type = t;
 		StreamId = stream;
 	}
 };
 
-class InputLayout
-{
+class IInputLayout {
 public:
-	int RegCount;
-	InputElement* RegInfo;
-
-	InputLayout(InputElement* elements, int count)
-	{
-		RegCount = count;
-		RegInfo = new InputElement[count];
-		memcpy(&RegInfo[0], &elements[0], sizeof(InputElement) * count);
-	}
-
-	int FindElement(const String& name)
-	{
-		for(int i = 0; i < RegCount; i++){
-			if(RegInfo[i].Name == name)
+	virtual size_t Size() = 0;
+	virtual InputElement* GetElement(size_t id) = 0;
+	int FindElement(const char* name) {
+		auto size = Size();
+		for (int i = 0; i < size; i++) {
+			if (strcmp(GetElement(i)->name, name) == 0)
 				return i;
 		}
 		return -1;
+	}
+};
+
+template<size_t _Size>
+class StaticInputLayout : public IInputLayout {
+public:
+	std::array<InputElement, _Size> elements;
+	virtual size_t Size() override {
+		return _Size;
+	}
+	virtual InputElement* GetElement(size_t id) override {
+		return &elements[id];
 	}
 };
 #endif // InputLayout_h__

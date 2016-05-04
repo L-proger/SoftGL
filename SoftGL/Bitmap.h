@@ -1,7 +1,7 @@
 #ifndef BITMAP_H
 #define BITMAP_H
 
-#include "Types.h"
+#include  <cstdint>
 
 /*struct BITMAPFILEHEADER {
   int16 bfType;

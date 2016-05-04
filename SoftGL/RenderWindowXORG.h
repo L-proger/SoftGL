@@ -38,7 +38,7 @@ public:
     bool IsCursorVisible();
     void CenterWindow();
 private:
-    uint8* image32;
+    uint8_t* image32;
     Visual *visual;
     GC gc;
     Display *display_name;

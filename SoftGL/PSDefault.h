@@ -6,11 +6,10 @@
 class PSDefault : public PixelShader
 {
 public:
-	float appTime;
 	Vector4D diffuse;
 	Texture2D* diffuse_map;
 
-	PSDefault():diffuse_map(nullptr)
+	PSDefault():diffuse_map(nullptr), diffuse(0)
 	{
 
 	}

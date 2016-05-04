@@ -1,14 +1,13 @@
 #ifndef DisplayMode_h__
 #define DisplayMode_h__
 
-#include "Types.h"
+#include <cstdint>
 
-	struct DisplayMode
-	{
-        int32 width;
-        int32 height;
-        int32 refreshRate;
-        int32 bpp;
-	};
+struct DisplayMode {
+	uint32_t width;
+	uint32_t height;
+	uint32_t refreshRate;
+	uint32_t bpp;
+};
 
 #endif // DisplayMode_h__

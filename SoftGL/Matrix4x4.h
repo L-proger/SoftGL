@@ -3,30 +3,40 @@
 #define __MATRIX4X4__
 //#include "Math.h"
 
-#include "Inline.h"
-
 
 typedef struct Matrix4x4
     {
 	public:
-        float M11;
-        float M12;
-        float M13;
-        float M14;
-        float M21;
-        float M22;
-        float M23;
-        float M24;
-        float M31;
-        float M32;
-        float M33;
-        float M34;
-        float M41;
-        float M42;
-        float M43;
-        float M44;
+		union
+		{
+			struct
+			{
+				float M11;
+				float M12;
+				float M13;
+				float M14;
+				float M21;
+				float M22;
+				float M23;
+				float M24;
+				float M31;
+				float M32;
+				float M33;
+				float M34;
+				float M41;
+				float M42;
+				float M43;
+				float M44;
+			};
+			
+			struct
+			{
+				float data[4 * 4];
+			};
+		};
+       
 
-		INLINE Matrix4x4 operator *(const Matrix4x4& matrix2)
+		Matrix4x4 operator *(const Matrix4x4& matrix2)
         {
             Matrix4x4 matrix;
             matrix.M11 = (((this->M11 * matrix2.M11) + (this->M12 * matrix2.M21)) + (this->M13 * matrix2.M31)) + (this->M14 * matrix2.M41);

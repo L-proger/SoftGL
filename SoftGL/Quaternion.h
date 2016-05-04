@@ -3,28 +3,28 @@
 //#include "Math.h"
 #include <cmath>
 
-	#undef INLINE
-	#define INLINE inline
+	#undef inline
+	#define inline inline
 
  struct Quaternion
     {
 	public:
 		float X,Y,Z,W;
-		INLINE Quaternion()
+		inline Quaternion()
         {
             X = 0.0f;
             Y = 0.0f;
             Z = 0.0f;
             W = 0.0f;
         }
-        INLINE Quaternion(float x, float y, float z, float w)
+        inline Quaternion(float x, float y, float z, float w)
         {
             X = x;
             Y = y;
             Z = z;
             W = w;
         }
-        INLINE Quaternion operator *(Quaternion& other) const
+        inline Quaternion operator *(Quaternion& other) const
         {
             Quaternion quaternion;
             float x = this->X;
