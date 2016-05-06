@@ -15,8 +15,8 @@ HEADERS += \
     VertexShader.h \
     VertexBuffer.h \
     Vertex.h \
-    Vector4D.h \
-    Vector3D.h \
+    float4.h \
+    float3.h \
     Vector2D.h \
     Types.h \
     Tools.h \

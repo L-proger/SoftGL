@@ -5,7 +5,7 @@
 #include "RasterizerSettings.h"
 #include "Debug.h"
 
-enum RegType {
+enum class RegType {
 	float1 = 0,
 	float2 = 1,
 	float3 = 2,
@@ -36,7 +36,7 @@ public:
 	virtual InputElement* GetElement(size_t id) = 0;
 	int FindElement(const char* name) {
 		auto size = Size();
-		for (int i = 0; i < size; i++) {
+		for (size_t i = 0; i < size; i++) {
 			if (strcmp(GetElement(i)->name, name) == 0)
 				return i;
 		}

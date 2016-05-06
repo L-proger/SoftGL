@@ -1,5 +1,5 @@
-#ifndef __VECTOR4D__
-#define __VECTOR4D__
+#ifndef __Vector4D__
+#define __Vector4D__
 
 struct Vector4D;
 struct Vector4D;

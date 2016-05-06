@@ -2,7 +2,6 @@
 #define BlockRasterizer_h__
 
 #include "Texture2D.h"
-#include "LMath.h"
 #include "Viewport.h"
 #include "InputLayout.h"
 #include "VertexShader.h"
@@ -12,17 +11,19 @@
 #include "Tools.h"
 #include <vector>
 #include "IRenderWindow.h"
-#include "Plane.h"
 #include "static_vector.h"
 #include "RasterizerSettings.h"
 #include <array>
 #include "Debug.h"
+#include "lmath.h"
+
+using namespace lm;
 
 #define REG_COUNT 5
 
 struct RegisterBlock
 {
-	std::array<Vector4D, REG_COUNT> reg;
+	std::array<float4, REG_COUNT> reg;
 
     inline static void Sub(const RegisterBlock& b1, const RegisterBlock& b2, RegisterBlock& result)
 	{
@@ -123,12 +124,13 @@ struct ClipFace
 
 class BlockRasterizer {
 public:
+	typedef Plane<float> RasterizerPlane;
 	typedef Static_vector<ClipFace, 2> ClipVector;
 
     BlockRasterizer();
     ~BlockRasterizer();
-    int GetPointNDCZone(const Vector4D& point);
-    void ClipToFrustumPlane(Plane plane, ClipVector& src, ClipVector& dst);
+    int GetPointNDCZone(const float4& point);
+    void ClipToFrustumPlane(RasterizerPlane plane, ClipVector& src, ClipVector& dst);
     void ClipToFrustum(ClipFace face, ClipVector& dst);
     Texture2D* GetBackBuffer();
     Texture2D* GetDepthBuffer();
@@ -149,21 +151,21 @@ public:
     void SetBlendState(BlendState* state);
     void SetTexture(Texture2D* tex, uint8_t slot);
 
-    float GetBlendAlpha(BLEND_SOURCE src, const Vector4D& srcColor, const Vector4D& dstColor);
+    float GetBlendAlpha(BLEND_SOURCE src, const float4& srcColor, const float4& dstColor);
 private:
 	void draw_impl(void* v0, void* v1, void* v2);
 	std::array<Texture2D*, MAX_TEX_SLOTS> tex_slots;
 
     IRenderWindow* render_window;
-	std::array<Plane, 7> NDCPlanes;
+	std::array<RasterizerPlane, 7> NDCPlanes;
 
-    uint32_t ConvertColor(const Vector4D& color);
-    Vector4D ConvertColor(uint32_t color);
+    uint32_t ConvertColor(const float4& color);
+    float4 ConvertColor(uint32_t color);
     void DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, RegisterBlock r2_src);
 
-	std::array<Vector4D*, REG_COUNT> r0_in;
-	std::array<Vector4D*, REG_COUNT> r1_in;
-	std::array<Vector4D*, REG_COUNT> r2_in;
+	std::array<float4*, REG_COUNT> r0_in;
+	std::array<float4*, REG_COUNT> r1_in;
+	std::array<float4*, REG_COUNT> r2_in;
 
 	RegisterBlock r0_out;
 	RegisterBlock r1_out;

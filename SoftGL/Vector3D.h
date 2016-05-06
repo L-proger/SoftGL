@@ -1,5 +1,5 @@
-#ifndef __VECTOR3D__
-#define __VECTOR3D__
+#ifndef __Vector3D__
+#define __Vector3D__
 
 #include <cmath>
 

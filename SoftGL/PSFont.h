@@ -7,20 +7,20 @@ class PSFont : public PixelShader
 {
 public:
 	float appTime;
-	Vector4D diffuse;
+	float4 diffuse;
 	Texture2D* diffuseTex;
 
 	PSFont()
 	{
 
 	}
-	Vector4D Execute(Vector4D* input)
+	float4 Execute(float4* input)
 	{
-		Vector4D out;
+		float4 out;
 
 		tex2D(diffuseTex, &out, input[1].X, input[1].Y);
 
-		out = Vector4D(1,1,1,1) - out;
+		out = float4(1,1,1,1) - out;
 		out.W = out.X;
 		return out;
 	}

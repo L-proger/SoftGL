@@ -44,15 +44,11 @@ public:
 		--_size;
 	}
 	T& operator[](size_t id){
-#if defined(SGL_DEBUG)
-		assert(id < _size, "Invalid index");
-#endif
+		SGL_ASSERT(id < _size, "Invalid index");
 		return _buffer[id];
 	}
 	const T& operator[](size_t id) const{
-#if defined(SGL_DEBUG)
-		assert(id < _size, "Invalid index");
-#endif
+		SGL_ASSERT(id < _size, "Invalid index");
 		return _buffer[id];
 	}
 	size_t size() const {

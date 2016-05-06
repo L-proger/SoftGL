@@ -1,13 +1,8 @@
 #include "vld.h"
-
-
 #include <stdio.h>
-#define _CRTDBG_MAP_ALLOC
-#include "LMath.h"
 #include "LString.h"
 #include "Buffer.h"
 #include "IRenderWindow.h"
-#include "Plane.h"
 #include "Texture2D.h"
 #include "BlockRasterizer.h"
 #include "RenderWindow.h"
@@ -17,9 +12,16 @@
 #include "PSDefault.h"
 #include "StaticBuffer.h"
 #include <array>
+#include "lmath.h"
 
+#if defined(_DEBUG)
 #pragma comment(lib, R"(D:\github\softgl\Debug\softgl.lib)")
+#else
+#pragma comment(lib, R"(D:\github\softgl\Release\softgl.lib)")
+#endif
 #pragma comment(lib, "vld.lib")
+
+#include "LMath_.h"
 
 int main() {
 
@@ -40,20 +42,20 @@ int main() {
 
 	BlockRasterizer rasterizer;
 
-	Matrix4x4 mWorld;
-	Matrix4x4 mView;
-	Matrix4x4 mProj;
+	float4x4 mWorld;
+	float4x4 mView;
+	float4x4 mProj;
 
-	Mat4x4Identity(&mWorld);
-	Mat4x4LookAtLH(Vector3D(0.0f, 1.5f, -3.5f), Vector3D(0.0f, 0.5f, 0.0f), Vector3D(0.0f, 1.0f, 0.0f), mView);
-	Mat4x4PerspectiveFOV(3.1415f / 4.0f, (float)sx / (float)sy, 0.1f, 100.0f, mProj);
+	mWorld = float4x4::identity();
+	mView = lm::matrix_lookat_lh(float3(0.0f, 1.5f, -3.5f), float3(0.0f, 0.5f, 0.0f), float3(0.0f, 1.0f, 0.0f));
+	mProj = matrix_perspective(3.1415f / 4.0f, (float)sx / (float)sy, 0.1f, 100.0f);
 
 	static_buffer<Vertex, 5> vertex_buffer({
-		Vertex(Vector4D(-1.0f, 0.0f, -1.0f, 1.0f), Vector2D(0.0f, 1.0f)),
-		Vertex(Vector4D(-1.0f, 0.0f, 1.0f, 1.0f), Vector2D(0.0f, 0.0f)),
-		Vertex(Vector4D(1.0f, 0.0f, 1.0f, 1.0f), Vector2D(1.0f, 0.0f)),
-		Vertex(Vector4D(1.0f, 0.0f, -1.0f, 1.0f), Vector2D(1.0f, 1.0f)),
-		Vertex(Vector4D(0.0f, 1.0f, 0.0f, 1.0f), Vector2D(0.5f, 0.0f)),
+		Vertex(float4(-1.0f, 0.0f, -1.0f, 1.0f), float2(0.0f, 1.0f)),
+		Vertex(float4(-1.0f, 0.0f, 1.0f, 1.0f), float2(0.0f, 0.0f)),
+		Vertex(float4(1.0f, 0.0f, 1.0f, 1.0f), float2(1.0f, 0.0f)),
+		Vertex(float4(1.0f, 0.0f, -1.0f, 1.0f), float2(1.0f, 1.0f)),
+		Vertex(float4(0.0f, 1.0f, 0.0f, 1.0f), float2(0.5f, 0.0f)),
 	});
 
 	static_buffer<indices_t, 9> index_buffer({0,1,2, 0,2,3, 0,1,4});
@@ -87,7 +89,7 @@ int main() {
 
 	while (true) {
 		//update world matrix rotation
-		Mat4x4RotationY(angle, mWorld);
+		mWorld = matrix_rotation<float>(angle);
 
 		vs->mView = mView;
 		vs->mProj = mProj;

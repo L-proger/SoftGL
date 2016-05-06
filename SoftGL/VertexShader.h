@@ -3,6 +3,8 @@
 
 #include "IShader.h"
 
+
+
 class VertexShader : public IShader
 {
 public:
@@ -10,7 +12,7 @@ public:
 	{
 
 	}
-	virtual int Execute(Vector4D** input, Vector4D* output) = 0;
+	virtual int Execute(float4** input, float4* output) = 0;
 
 };
 #endif // VertexShader_h__

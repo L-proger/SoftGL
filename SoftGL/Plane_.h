@@ -1,12 +1,12 @@
 #ifndef Plane_h__
 #define Plane_h__
-#include "Vector3D.h"
-#include "Vector4D.h"
+#include "float3.h"
+#include "float4.h"
 #include <cmath>
 
 class Plane {
 public:
-	Vector3D Normal;
+	float3 Normal;
 	float D;
 	Plane(float a, float b, float c, float d) {
 		Normal.X = a;
@@ -27,23 +27,23 @@ public:
 		D = 0.0f;
 	}
 
-	Plane(Vector3D& _normal, float d) {
+	Plane(float3& _normal, float d) {
 		Normal = _normal;
 		D = d;
 	}
 
-	Plane(Vector3D& point, Vector3D& normal) {
+	Plane(float3& point, float3& normal) {
 		Normal = normal;
 		D = -(((normal.Y * point.Y) + (normal.X * point.X)) + (normal.Z * point.Z));
 	}
 
-	Plane(Vector4D& val) {
+	Plane(float4& val) {
 		Normal.X = val.X;
 		Normal.Y = val.Y;
 		Normal.Z = val.Z;
 		D = val.W;
 	}
-	Plane(Vector3D& point1, Vector3D& point2, Vector3D& point3) {
+	Plane(float3& point1, float3& point2, float3& point3) {
 		float num10 = point2.X - point1.X;
 		float num9 = point2.Y - point1.Y;
 		float num8 = point2.Z - point1.Z;

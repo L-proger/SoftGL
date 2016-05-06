@@ -26,14 +26,14 @@ public:
 		inputs.push_back(STR("POSITION"));
 		inputs.push_back(STR("COLOR"));
 	}
-	int Execute(Vector4D** input, Vector4D* output)
+	int Execute(float4** input, float4* output)
 	{
 		//Matrix4x4 wv = mWorld * mView;
 		//Matrix4x4 wvp = wv * mProj;
 		float xScale = width / screenWidth;
 		float yScale = height / screenHeight;
 
-		Vector4D position = (*input)[0];
+		float4 position = (*input)[0];
 		position.W = 1.0f;
 
 		position.X *= width;

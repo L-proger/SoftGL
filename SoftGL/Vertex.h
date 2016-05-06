@@ -5,13 +5,13 @@
 
 struct Vertex
 {
-	Vector4D Position;
-	Vector2D Texcoord;
+	float4 Position;
+	float2 Texcoord;
 	Vertex()
 	{
 		
 	}
-	Vertex(const Vector4D& pos, const Vector2D& tc)
+	Vertex(const float4& pos, const float2& tc)
 	{
 		Position = pos;
 		Texcoord = tc;
@@ -19,7 +19,7 @@ struct Vertex
 
 	static int stride()
 	{
-		return sizeof(Vector4D) + sizeof(Vector2D);
+		return sizeof(float4) + sizeof(float2);
 	}
 };
 #endif // Vertex_h__

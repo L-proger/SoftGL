@@ -9,8 +9,8 @@ static inline uint32_t sample2D(Texture2D* tex, float tX, float tY)
 	{
 		return 0;
 	}
-    tX = clampFloat(tX, 0.0f, 1.0f);
-    tY = clampFloat(tY, 0.0f, 1.0f);
+    tX = lm::clamp(tX, 0.0f, 1.0f);
+    tY = lm::clamp(tY, 0.0f, 1.0f);
 
     tY = 1.0f - tY;
 

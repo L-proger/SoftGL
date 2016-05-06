@@ -6,10 +6,10 @@
 class Camera
 {
 private:
-	Vector3D position;
-	Vector3D direction;
-	Vector3D up;
-	Vector3D right;
+	float3 position;
+	float3 direction;
+	float3 up;
+	float3 right;
 	float fov;
 	float aspect;
 
@@ -17,12 +17,12 @@ private:
 	//
 	//
 	//2------3
-	Vector3D corners[4];
+	float3 corners[4];
 
 	void ComputeCorners()
 	{
 		Vec3Normalize(&direction);
-		right = Vec3Cross(Vector3D(0,1,0), direction);
+		right = Vec3Cross(float3(0,1,0), direction);
 		up = Vec3Cross(direction, right);
 
 		Vec3Normalize(&right);
@@ -31,7 +31,7 @@ private:
 		float farW = tanf(fov / 2.0f);
 		float farH = farW / aspect;
 
-		Vector3D farCenter = position + direction;
+		float3 farCenter = position + direction;
 
 		corners[0] = farCenter + (up * farH) + (right * -farW);
 		corners[1] = farCenter + (up * farH) + (right * farW);
@@ -45,24 +45,24 @@ public:
 	{
 		ComputeCorners();
 	}
-	Vector3D* GetCorners()
+	float3* GetCorners()
 	{
 		return &corners[0];
 	}
-	void SetPosition(const Vector3D& pos)
+	void SetPosition(const float3& pos)
 	{
 		position = pos;
 		ComputeCorners();
 	}
-	Vector3D GetPosition()
+	float3 GetPosition()
 	{
 		return position;
 	}
-	Vector3D GetDirection()
+	float3 GetDirection()
 	{
 		return direction;
 	}
-	void SetTargets(const Vector3D& at)
+	void SetTargets(const float3& at)
 	{
 		direction = at - position;
 		ComputeCorners();

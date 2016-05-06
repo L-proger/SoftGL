@@ -6,14 +6,14 @@
 class Ray
 {
 public:
-	Vector3D Origin;
-	Vector3D Direction;
+	float3 Origin;
+	float3 Direction;
 	Ray()
 		:Origin(0,0,0), Direction(0,0,0)
 	{
 
 	}
-	Ray(const Vector3D& orig, const Vector3D& dir)
+	Ray(const float3& orig, const float3& dir)
 	{
 		Origin = orig;
 		Direction = dir;

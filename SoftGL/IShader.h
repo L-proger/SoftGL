@@ -3,7 +3,9 @@
 
 #include "LString.h"
 #include <vector>
-#include "LMath.h"
+#include "lmath.h"
+
+using namespace lm;
 using namespace std;
 
 class IShader

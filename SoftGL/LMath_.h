@@ -7,7 +7,7 @@
 #include "Vector3D.h"
 #include "Vector4D.h"
 #include "Quaternion.h"
-#include "Plane.h"
+//#include "Plane.h"
 #include <math.h>
 #include <cstdint>
 #include <algorithm>
@@ -1023,11 +1023,13 @@ static inline void Mat4x4Lerp(const Matrix4x4& start, const Matrix4x4& end, Matr
 	result.M43 = ((end.M43 - start.M43) * amount) + start.M43;
 	result.M44 = ((end.M44 - start.M44) * amount) + start.M44;
 }
+
+/*
 static inline void Mat4x4Billboard(const Vector3D& objectPosition, const Vector3D& cameraPosition, const Vector3D& cameraUpVector, const Vector3D& cameraForwardVector, Matrix4x4& matrix) {
 	Vector3D eyeDir = objectPosition - cameraPosition;
 	Vector3D right = eyeDir;
 	Vector3D result;
-	Vector3D vector3;
+	Vector3D Vector3D;
 
 	float x = right.X;
 	float y = right.Y;
@@ -1041,11 +1043,11 @@ static inline void Mat4x4Billboard(const Vector3D& objectPosition, const Vector3
 	}
 	Vec3Cross(cameraUpVector, right, result);
 	Vec3Normalize(&result);
-	Vec3Cross(right, result, vector3);
+	Vec3Cross(right, result, Vector3D);
 
-	matrix.M11 = vector3.X;
-	matrix.M12 = vector3.Y;
-	matrix.M13 = vector3.Z;
+	matrix.M11 = Vector3D.X;
+	matrix.M12 = Vector3D.Y;
+	matrix.M13 = Vector3D.Z;
 	matrix.M14 = 0.0f;
 	matrix.M21 = result.X;
 	matrix.M22 = result.Y;
@@ -1059,7 +1061,7 @@ static inline void Mat4x4Billboard(const Vector3D& objectPosition, const Vector3
 	matrix.M42 = objectPosition.Y;
 	matrix.M43 = objectPosition.Z;
 	matrix.M44 = 1.0f;
-}
+}*/
 static inline void Mat4x4LookAtLH(const Vector3D& cameraPosition, const Vector3D& cameraTarget, const Vector3D& cameraUpVector, Matrix4x4& matrix) {
 
 	Vector3D camDir = cameraTarget - cameraPosition;
@@ -1246,6 +1248,8 @@ static inline void QuatInvert(Quaternion& src) {
 	src.W = src.W * num;
 }
 //-----Plane-----
+
+/*
 static inline bool PlaneIntersectLine(const Plane& plane, const Vector3D& start, const Vector3D& dir, float& dist) {
 	dist = 0;
 	float num2 = ((plane.Normal.X * dir.X) + (plane.Normal.Y * dir.Y)) + (plane.Normal.Z * dir.Z);
@@ -1297,21 +1301,8 @@ static inline void PlaneTransform(const Plane& plane, const Matrix4x4& matrix, P
 	result.Normal.Z = (((x * matrix2.M31) + (y * matrix2.M32)) + (z * matrix2.M33)) + (d * matrix2.M34);
 	result.D = (((x * matrix2.M41) + (y * matrix2.M42)) + (z * matrix2.M43)) + (d * matrix2.M44);
 }
-static inline float PlaneDot(const Plane& plane, const Vector4D& value) {
-	return ((((plane.Normal.X * value.X) + (plane.Normal.Y * value.Y)) + (plane.Normal.Z * value.Z)) + (plane.D * value.W));
-}
-static inline float PlaneDotCoordinate(const Plane& plane, const Vector3D& value) {
-	return ((((plane.Normal.X * value.X) + (plane.Normal.Y * value.Y)) + (plane.Normal.Z * value.Z)) + plane.D);
-}
 
-static inline float PlaneDotNormal(const Plane& plane, const Vector3D& value) {
-	return (((plane.Normal.X * value.X) + (plane.Normal.Y * value.Y)) + (plane.Normal.Z * value.Z));
-}
-static inline float PlaneDot(const Plane& plane, const Vector3D& point) {
-	return ((((plane.Normal.Y * point.Y) + (plane.Normal.X * point.X)) + (plane.Normal.Z * point.Z)) + plane.D);
-}
-
-
+*/
 static inline void Get4x4Offsets(int destTextureWidth, int destTextureHeight, Vector4D* output) {
 	float tu = 1.0f / destTextureWidth;
 	float tv = 1.0f / destTextureHeight;

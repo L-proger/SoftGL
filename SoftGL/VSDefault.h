@@ -6,9 +6,9 @@
 class VSDefault : public VertexShader
 {
 public:
-	Matrix4x4 mWorld;
-	Matrix4x4 mView;
-	Matrix4x4 mProj;
+	float4x4 mWorld;
+	float4x4 mView;
+	float4x4 mProj;
 
 	VSDefault()
 	{
@@ -16,15 +16,15 @@ public:
         inputs.push_back(String("POSITION"));
         inputs.push_back(String("TEXCOORD"));
 	}
-	int Execute(Vector4D** input, Vector4D* output)
+	int Execute(float4** input, float4* output)
 	{
-		Matrix4x4 wv = mWorld * mView;
-		Matrix4x4 wvp = wv * mProj;
+		float4x4 wv = lm::mul(mWorld, mView);
+		float4x4 wvp = lm::mul(wv, mProj);
 
-		Vector4D position = (*input)[0];
-		position.W = 1.0f;
+		float4 position = (*input)[0];
+		position.w = 1.0f;
 
-		Vec4Transform(position, wvp);
+		position = lm::mul(wvp, position);
 		output[0] = position;
 		output[1] = (*input)[1];
 

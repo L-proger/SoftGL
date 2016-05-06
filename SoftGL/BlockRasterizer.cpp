@@ -10,13 +10,13 @@ BlockRasterizer::BlockRasterizer()
 	blendState.DstAlpha = BLEND_INV_SRC_ALPHA;
 	blendState.BlendEnable = false;
 
-	NDCPlanes[0].Set(0, 0, 0, 1);
-	NDCPlanes[1].Set(1, 0, 0, 1);
-	NDCPlanes[2].Set(-1, 0, 0, 1);
-	NDCPlanes[3].Set(0, 1, 0, 1);
-	NDCPlanes[4].Set(0, -1, 0, 1);
-	NDCPlanes[5].Set(0, 0, 1, 1);
-	NDCPlanes[6].Set(0, 0, -1, 1);
+	NDCPlanes[0] = RasterizerPlane(0, 0, 0, 1);
+	NDCPlanes[1] = RasterizerPlane(1, 0, 0, 1);
+	NDCPlanes[2] = RasterizerPlane(-1, 0, 0, 1);
+	NDCPlanes[3] = RasterizerPlane(0, 1, 0, 1);
+	NDCPlanes[4] = RasterizerPlane(0, -1, 0, 1);
+	NDCPlanes[5] = RasterizerPlane(0, 0, 1, 1);
+	NDCPlanes[6] = RasterizerPlane(0, 0, -1, 1);
 
 	for (int i = 0; i < MAX_TEX_SLOTS; i++)
 		tex_slots[i] = 0;
@@ -26,19 +26,19 @@ BlockRasterizer::~BlockRasterizer() {
 
 }
 
-int BlockRasterizer::GetPointNDCZone(const Vector4D& point) {
+int BlockRasterizer::GetPointNDCZone(const float4& point) {
 	int flags = 0;
-	if (point.W < 0.0f) flags |= (1 << ZONE_ZERO);
-	if (point.X < -point.W) flags |= (1 << ZONE_LEFT);
-	if (point.X > point.W) flags |= (1 << ZONE_RIGHT);
-	if (point.Y < -point.W) flags |= (1 << ZONE_BOTTOM);
-	if (point.Y > point.W) flags |= (1 << ZONE_TOP);
-	if (point.Z < -point.W) flags |= (1 << ZONE_FAR);
-	if (point.Z > point.W) flags |= (1 << ZONE_NEAR);
+	if (point.w < 0.0f) flags |= (1 << ZONE_ZERO);
+	if (point.x < -point.w) flags |= (1 << ZONE_LEFT);
+	if (point.x > point.w) flags |= (1 << ZONE_RIGHT);
+	if (point.y < -point.w) flags |= (1 << ZONE_BOTTOM);
+	if (point.y > point.w) flags |= (1 << ZONE_TOP);
+	if (point.z < -point.w) flags |= (1 << ZONE_FAR);
+	if (point.z > point.w) flags |= (1 << ZONE_NEAR);
 	return flags;
 }
 
-void BlockRasterizer::ClipToFrustumPlane(Plane plane, ClipVector& src, ClipVector& dst) {
+void BlockRasterizer::ClipToFrustumPlane(RasterizerPlane plane, ClipVector& src, ClipVector& dst) {
 	auto face_count = src.size();
 
 	for (int i = 0; i < face_count; i++) {
@@ -46,9 +46,9 @@ void BlockRasterizer::ClipToFrustumPlane(Plane plane, ClipVector& src, ClipVecto
 		ClipFace face = src[i];
 		int v0out, v1out, v2out, vout_cnt;
 		v0out = v1out = v2out = vout_cnt = 0;
-		if (PlaneDot(plane, face.v0.reg[0]) <= 0) { v0out++; vout_cnt++; }
-		if (PlaneDot(plane, face.v1.reg[0]) <= 0) { v1out++; vout_cnt++; }
-		if (PlaneDot(plane, face.v2.reg[0]) <= 0) { v2out++; vout_cnt++; }
+		if (lm::dot(plane, face.v0.reg[0]) <= 0) { v0out++; vout_cnt++; }
+		if (lm::dot(plane, face.v1.reg[0]) <= 0) { v1out++; vout_cnt++; }
+		if (lm::dot(plane, face.v2.reg[0]) <= 0) { v2out++; vout_cnt++; }
 
 
 		switch (vout_cnt) {
@@ -65,8 +65,8 @@ void BlockRasterizer::ClipToFrustumPlane(Plane plane, ClipVector& src, ClipVecto
 			if (v1out && v2out) { vert[0] = &face.v1; vert[1] = &face.v2; vert[2] = &face.v0; }
 			if (v2out && v0out) { vert[0] = &face.v2; vert[1] = &face.v0; vert[2] = &face.v1; }
 
-			float alpha_a = PlaneDot(plane, vert[2]->reg[0]) / (PlaneDot(plane, vert[2]->reg[0]) - PlaneDot(plane, vert[1]->reg[0]));
-			float alpha_b = PlaneDot(plane, vert[2]->reg[0]) / (PlaneDot(plane, vert[2]->reg[0]) - PlaneDot(plane, vert[0]->reg[0]));
+			float alpha_a = lm::dot(plane, vert[2]->reg[0]) / (lm::dot(plane, vert[2]->reg[0]) - lm::dot(plane, vert[1]->reg[0]));
+			float alpha_b = lm::dot(plane, vert[2]->reg[0]) / (lm::dot(plane, vert[2]->reg[0]) - lm::dot(plane, vert[0]->reg[0]));
 
 			for (int k = 0; k < geomLayout->Size(); k++) {
 				vA.reg[k] = vert[2]->reg[k] + (vert[1]->reg[k] - vert[2]->reg[k]) * alpha_a;
@@ -89,8 +89,8 @@ void BlockRasterizer::ClipToFrustumPlane(Plane plane, ClipVector& src, ClipVecto
 			if (v1out) { vert[0] = &face.v1; vert[1] = &face.v2; vert[2] = &face.v0; }
 			if (v2out) { vert[0] = &face.v2; vert[1] = &face.v0; vert[2] = &face.v1; }
 
-			float alpha_a = PlaneDot(plane, vert[2]->reg[0]) / (PlaneDot(plane, vert[2]->reg[0]) - PlaneDot(plane, vert[0]->reg[0]));
-			float alpha_b = PlaneDot(plane, vert[1]->reg[0]) / (PlaneDot(plane, vert[1]->reg[0]) - PlaneDot(plane, vert[0]->reg[0]));
+			float alpha_a = lm::dot(plane, vert[2]->reg[0]) / (lm::dot(plane, vert[2]->reg[0]) - lm::dot(plane, vert[0]->reg[0]));
+			float alpha_b = lm::dot(plane, vert[1]->reg[0]) / (lm::dot(plane, vert[1]->reg[0]) - lm::dot(plane, vert[0]->reg[0]));
 
 			for (int k = 0; k < geomLayout->Size(); k++) {
 				vA.reg[k] = vert[2]->reg[k] + (vert[0]->reg[k] - vert[2]->reg[k]) * alpha_a;
@@ -252,9 +252,9 @@ void BlockRasterizer::draw_impl(void* v0, void* v1, void* v2)
 	for (int i = 0; i < elements; i++) { //TODO: OMG WTF! Fix memory corruption!!!
 		InputElement* e = geomLayout->GetElement(i);
 		int rd = regMapping[i];
-		r0_in[rd] = reinterpret_cast<Vector4D*>((uint8_t*)v0 + e->Offset);
-		r1_in[rd] = reinterpret_cast<Vector4D*>((uint8_t*)v1 + e->Offset);
-		r2_in[rd] = reinterpret_cast<Vector4D*>((uint8_t*)v2 + e->Offset);
+		r0_in[rd] = reinterpret_cast<float4*>((uint8_t*)v0 + e->Offset);
+		r1_in[rd] = reinterpret_cast<float4*>((uint8_t*)v1 + e->Offset);
+		r2_in[rd] = reinterpret_cast<float4*>((uint8_t*)v2 + e->Offset);
 	}
 	vs->Execute(&r0_in[0], &r0_out.reg[0]);
 	vs->Execute(&r1_in[0], &r1_out.reg[0]);
@@ -312,30 +312,30 @@ void BlockRasterizer::SetBlendState(BlendState* state) {
 	blendState = *state;
 }
 
-float BlockRasterizer::GetBlendAlpha(BLEND_SOURCE src, const Vector4D& srcColor, const Vector4D& dstColor) {
+float BlockRasterizer::GetBlendAlpha(BLEND_SOURCE src, const float4& srcColor, const float4& dstColor) {
 	switch (src) {
 	case BLEND_ZERO:
 		return 0.0f;
 	case BLEND_ONE:
 		return 1.0f;
 	case BLEND_SRC_ALPHA:
-		return srcColor.W;
+		return srcColor.w;
 	case BLEND_INV_SRC_ALPHA:
-		return 1.0f - srcColor.W;
+		return 1.0f - srcColor.w;
 	}
 	return 0;
 }
 
-uint32_t BlockRasterizer::ConvertColor(const Vector4D& color) {
-	uint32_t r = (uint32_t)(color.X * 255.0f);
-	uint32_t g = (uint32_t)(color.Y * 255.0f);
-	uint32_t b = (uint32_t)(color.Z * 255.0f);
-	uint32_t a = (uint32_t)(color.W * 255.0f);
+uint32_t BlockRasterizer::ConvertColor(const float4& color) {
+	uint32_t r = (uint32_t)(color.x * 255.0f);
+	uint32_t g = (uint32_t)(color.y * 255.0f);
+	uint32_t b = (uint32_t)(color.z * 255.0f);
+	uint32_t a = (uint32_t)(color.w * 255.0f);
 
 	return (a << 24) | (r << 16) | (g << 8) | (b);
 }
 
-Vector4D BlockRasterizer::ConvertColor(uint32_t color) {
+float4 BlockRasterizer::ConvertColor(uint32_t color) {
 	float d = 1.0f / 255.0f;
 
 	float a = (float)((color >> 24) & 0xff) * d;
@@ -343,7 +343,7 @@ Vector4D BlockRasterizer::ConvertColor(uint32_t color) {
 	float g = (float)((color >> 8) & 0xff) * d;
 	float b = (float)((color >> 0) & 0xff) * d;
 
-	return Vector4D(r, g, b, a);
+	return float4(r, g, b, a);
 }
 
 void BlockRasterizer::SetTexture(Texture2D* tex, uint8_t slot) {
@@ -366,55 +366,54 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 
 
 	//p1->reg[0].W = abs(p1->reg[0].W);
-	float iw0 = 1.0f / p0->reg[0].W;
-	float iw1 = 1.0f / p1->reg[0].W;
-	float iw2 = 1.0f / p2->reg[0].W;
+	float iw0 = 1.0f / p0->reg[0].w;
+	float iw1 = 1.0f / p1->reg[0].w;
+	float iw2 = 1.0f / p2->reg[0].w;
 
 	
 
 	//transform vertices to viewport space
-	p0->reg[0].X = (p0->reg[0].X * iw0) * scrW_h + scrW_h;
-	p0->reg[0].Y = (p0->reg[0].Y * iw0) * scrH_h + scrH_h;
-	p0->reg[0].Z = (p0->reg[0].Z * iw0);
+	p0->reg[0].x = (p0->reg[0].x * iw0) * scrW_h + scrW_h;
+	p0->reg[0].y = (p0->reg[0].y * iw0) * scrH_h + scrH_h;
+	p0->reg[0].z = (p0->reg[0].z * iw0);
 
-	p1->reg[0].X = (p1->reg[0].X * iw1) * scrW_h + scrW_h;
-	p1->reg[0].Y = (p1->reg[0].Y * iw1) * scrH_h + scrH_h;
-	p1->reg[0].Z = (p1->reg[0].Z * iw1);
+	p1->reg[0].x = (p1->reg[0].x * iw1) * scrW_h + scrW_h;
+	p1->reg[0].y = (p1->reg[0].y * iw1) * scrH_h + scrH_h;
+	p1->reg[0].z = (p1->reg[0].z * iw1);
 
-	p2->reg[0].X = (p2->reg[0].X * iw2) * scrW_h + scrW_h;
-	p2->reg[0].Y = (p2->reg[0].Y * iw2) * scrH_h + scrH_h;
-	p2->reg[0].Z = (p2->reg[0].Z * iw2);
+	p2->reg[0].x = (p2->reg[0].x * iw2) * scrW_h + scrW_h;
+	p2->reg[0].y = (p2->reg[0].y * iw2) * scrH_h + scrH_h;
+	p2->reg[0].z = (p2->reg[0].z * iw2);
 
-	Vector3D camZ(p0->reg[0].Z, p1->reg[0].Z, p2->reg[0].Z);
+	float3 camZ(p0->reg[0].z, p1->reg[0].z, p2->reg[0].z);
 
 	bool disableCulling = false;
 	if (disableCulling)
-		if (((p1->reg[0].X - p0->reg[0].X) * (p2->reg[0].Y - p0->reg[0].Y) - (p1->reg[0].Y - p0->reg[0].Y) * (p2->reg[0].X - p0->reg[0].X) <= 0)) {
+		if (((p1->reg[0].x - p0->reg[0].x) * (p2->reg[0].y - p0->reg[0].y) - (p1->reg[0].y- p0->reg[0].y) * (p2->reg[0].x - p0->reg[0].x) <= 0)) {
 			RegisterBlock* pTmp = p0;
 			p0 = p2;
 			p2 = pTmp;
 		}
 
 	//interpolation weights per vertex
-	Vector3D col1(1.0f, 0.0f, 0.0f);
-	Vector3D col2(0.0f, 1.0f, 0.0f);
-	Vector3D col3(0.0f, 0.0f, 1.0f);
+	float3 col1(1.0f, 0.0f, 0.0f);
+	float3 col2(0.0f, 1.0f, 0.0f);
+	float3 col3(0.0f, 0.0f, 1.0f);
 
 	//weights deltas
-	Vector3D dc31 = col3 - col1;
-	Vector3D dc21 = col2 - col1;
+	float3 dc31 = col3 - col1;
+	float3 dc21 = col2 - col1;
 
 	//temporary register for perspective correction value
 	float pc;
 
 
-	const int x1 = fround(16.0f * p0->reg[0].X);
-	const int x2 = fround(16.0f * p1->reg[0].X);
-	const int x3 = fround(16.0f * p2->reg[0].X);
-
-	const int y1 = fround(16.0f * p0->reg[0].Y);
-	const int y2 = fround(16.0f * p1->reg[0].Y);
-	const int y3 = fround(16.0f * p2->reg[0].Y);
+	const int x1 = (int)std::round(16.0f * p0->reg[0].x);
+	const int x2 = (int)std::round(16.0f * p1->reg[0].x);
+	const int x3 = (int)std::round(16.0f * p2->reg[0].x);
+	const int y1 = (int)std::round(16.0f * p0->reg[0].y);
+	const int y2 = (int)std::round(16.0f * p1->reg[0].y);
+	const int y3 = (int)std::round(16.0f * p2->reg[0].y);
 
 	const int Dx12 = x1 - x2;
 	const int Dx23 = x2 - x3;
@@ -433,10 +432,10 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 	const int FDy31 = Dy31 << 4;
 
 	//bounding rectangle
-	int minX = (min_i(x1, x2, x3) + 0xF) >> 4;
-	int maxX = (max_i(x1, x2, x3) + 0xF) >> 4;
-	int minY = (min_i(y1, y2, y3) + 0xF) >> 4;
-	int maxY = (max_i(y1, y2, y3) + 0xF) >> 4;
+	int minX = ((std::min)((std::min)(x1, x2), x3) + 0xF) >> 4;
+	int maxX = ((std::max)((std::max)(x1, x2), x3) + 0xF) >> 4;
+	int minY = ((std::min)((std::min)(y1, y2), y3) + 0xF) >> 4;
+	int maxY = ((std::max)((std::max)(y1, y2), y3) + 0xF) >> 4;
 
 	const int ix1 = (x1 + 0xf) >> 4;
 	const int ix2 = (x2 + 0xf) >> 4;
@@ -446,14 +445,14 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 	const int iy2 = (y2 + 0xf) >> 4;
 	const int iy3 = (y3 + 0xf) >> 4;
 
-	Vector3D A = dc31 * ((iy2 - iy1)) - dc21 * ((iy3 - iy1));
-	Vector3D B = dc21 * ((ix3 - ix1)) - dc31 * ((ix2 - ix1));
+	float3 A = dc31 * ((iy2 - iy1)) - dc21 * ((iy3 - iy1));
+	float3 B = dc21 * ((ix3 - ix1)) - dc31 * ((ix2 - ix1));
 	int C = ((iy3 - iy1)) * ((ix2 - ix1)) - ((ix3 - ix1)) * ((iy2 - iy1));
 
 	if (C == 0) return;
 
-	Vector3D dzdx = A / (float)-C;
-	Vector3D dzdy = B / (float)-C;
+	float3 dzdx = A / (float)-C;
+	float3 dzdy = B / (float)-C;
 
 	if (maxY < 0)
 		return;
@@ -537,14 +536,14 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 				for (int by = 0; by < blockSize; by++) {
 					for (int bx = x; bx < (x + blockSize); bx++) {
 						//compute interpolation weights
-						Vector3D interpolators = col1 + dzdx * (bx - ix1) + dzdy*(y + by - iy1);
-						Vector3D invW(1.0f / p0->reg[0].W * interpolators.X, 1.0f / p1->reg[0].W * interpolators.Y, 1.0f / p2->reg[0].W * interpolators.Z);
+						float3 interpolators = col1 + dzdx * (bx - ix1) + dzdy*(y + by - iy1);
+						float3 invW(1.0f / p0->reg[0].w * interpolators.x, 1.0f / p1->reg[0].w * interpolators.y, 1.0f / p2->reg[0].w * interpolators.z);
 
 						//compute 1/w value for perspective correction
-						pc = 1.0f / (invW.X + invW.Y + invW.Z);
+						pc = 1.0f / (invW.x + invW.y + invW.z);
 
 						//interpolate Z
-						float z_interp = p0->reg[0].Z * invW.X + p1->reg[0].Z * invW.Y + p2->reg[0].Z * invW.Z;
+						float z_interp = p0->reg[0].z * invW.x + p1->reg[0].z * invW.y + p2->reg[0].z * invW.z;
 						z_interp *= pc;
 
 						if(zBuffer[bx] > z_interp)
@@ -552,16 +551,16 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 							zBuffer[bx] = z_interp;
 							//interpolate registers
 							for (int r = 1; r < REG_COUNT; r++) {
-								r_ps.reg[r] = p0->reg[r] * invW.X + p1->reg[r] * invW.Y + p2->reg[r] * invW.Z;
+								r_ps.reg[r] = p0->reg[r] * invW.x + p1->reg[r] * invW.y + p2->reg[r] * invW.z;
 								r_ps.reg[r] *= pc; //add perspective correction
 							}
 
-							Vector4D pixel_color = ps->Execute(&r_ps.reg[0]);
+							float4 pixel_color = ps->Execute(&r_ps.reg[0]);
 
 							if (blendState.BlendEnable) {
 								uint32_t dc = colorBuffer[bx];
 
-								Vector4D dstColor = ConvertColor(dc);
+								float4 dstColor = ConvertColor(dc);
 
 								//get source alpha
 								float srcAlpha = GetBlendAlpha(blendState.SrcAlpha, pixel_color, dstColor);
@@ -589,15 +588,15 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 
 					for (int bx = x; bx < (x + blockSize); bx++) {
 						if (CX1 < 0 && CX2 < 0 && CX3 < 0) {
-							Vector3D interpolators = col1 + dzdx*(bx - ix1) + dzdy*(by - iy1);
+							float3 interpolators = col1 + dzdx*(bx - ix1) + dzdy*(by - iy1);
 
-							Vector3D invW(1.0f / p0->reg[0].W * interpolators.X, 1.0f / p1->reg[0].W * interpolators.Y, 1.0f / p2->reg[0].W * interpolators.Z);
+							float3 invW(1.0f / p0->reg[0].w * interpolators.x, 1.0f / p1->reg[0].w * interpolators.y, 1.0f / p2->reg[0].w * interpolators.z);
 
 							//compute 1/w value for perspective correction
-							pc = 1.0f / (invW.X + invW.Y + invW.Z);
+							pc = 1.0f / (invW.x + invW.y + invW.z);
 
 							//interpolate Z
-							float z_interp = p0->reg[0].Z * invW.X + p1->reg[0].Z * invW.Y + p2->reg[0].Z * invW.Z;
+							float z_interp = p0->reg[0].z * invW.x + p1->reg[0].z * invW.y + p2->reg[0].z * invW.z;
 							z_interp *= pc;
 
 
@@ -605,11 +604,11 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 								zBuffer[bx] = z_interp;
 								//interpolate registers
 								for (int r = 1; r < REG_COUNT; r++) {
-									r_ps.reg[r] = p0->reg[r] * invW.X + p1->reg[r] * invW.Y + p2->reg[r] * invW.Z;
+									r_ps.reg[r] = p0->reg[r] * invW.x + p1->reg[r] * invW.y + p2->reg[r] * invW.z;
 									r_ps.reg[r] *= pc; //add perspective correction
 								}
 
-								Vector4D rst;
+								float4 rst;
 								rst = ps->Execute(&r_ps.reg[0]);
 
 								//UINT texcolor = ConvertColor(rst);
@@ -617,7 +616,7 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 								if (blendState.BlendEnable) {
 									uint32_t dc = colorBuffer[bx];
 
-									Vector4D dstColor = ConvertColor(dc);
+									float4 dstColor = ConvertColor(dc);
 
 									float srcAlpha;
 									float dstAlpha;

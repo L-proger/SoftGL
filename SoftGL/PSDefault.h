@@ -6,19 +6,19 @@
 class PSDefault : public PixelShader
 {
 public:
-	Vector4D diffuse;
+	float4 diffuse;
 	Texture2D* diffuse_map;
 
 	PSDefault():diffuse_map(nullptr), diffuse(0)
 	{
 
 	}
-	Vector4D Execute(Vector4D* input)
+	float4 Execute(float4* input)
 	{
-		Vector4D result = Vector4D(0, 0, 0, 0);
+		float4 result = float4(0, 0, 0, 0);
 		if(diffuse_map != nullptr)
 		{
-			tex2D(diffuse_map, &result, input[1].X, input[1].Y);
+			tex2D(diffuse_map, &result, input[1].x, input[1].y);
 		}
 		return result;
 	}
