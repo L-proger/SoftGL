@@ -13,6 +13,10 @@
 #include "StaticBuffer.h"
 #include <array>
 #include "lmath.h"
+#include <iostream>
+#include "transform.h"
+#include "gameobject.h"
+#include "Camera.h"
 
 #if defined(_DEBUG)
 #pragma comment(lib, R"(D:\github\softgl\Debug\softgl.lib)")
@@ -21,10 +25,15 @@
 #endif
 #pragma comment(lib, "vld.lib")
 
-#include "LMath_.h"
+#include <FpsCounter.h>
 
 int main() {
+	
+	Game_object go;
+	Camera camera(&go);
 
+	go.transform.set_localPosition(float3(0.0f, 1.5f, -3.5f));
+	//go.transform.set_local_rotation()
 
 	int sx = 640;
 	int sy = 480;
@@ -47,8 +56,8 @@ int main() {
 	float4x4 mProj;
 
 	mWorld = float4x4::identity();
-	mView = lm::matrix_lookat_lh(float3(0.0f, 1.5f, -3.5f), float3(0.0f, 0.5f, 0.0f), float3(0.0f, 1.0f, 0.0f));
-	mProj = matrix_perspective(3.1415f / 4.0f, (float)sx / (float)sy, 0.1f, 100.0f);
+	mView = lm::matrix4x4_lookat_lh(float3(0.0f, 1.5f, -3.5f), float3(0.0f, 1.5f, 0.0f), float3(0.0f, 1.0f, 0.0f));
+	mProj = matrix4x4_perspective(3.1415f / 4.0f, (float)sx / (float)sy, 0.1f, 100.0f);
 
 	static_buffer<Vertex, 5> vertex_buffer({
 		Vertex(float4(-1.0f, 0.0f, -1.0f, 1.0f), float2(0.0f, 1.0f)),
@@ -68,7 +77,7 @@ int main() {
 
 	rasterizer.SetInputLayout(&layout);
 	rasterizer.SetVertexBuffer(&vertex_buffer, 0, Vertex::stride());
-	rasterizer.set_index_buffer(&index_buffer, 0);
+	rasterizer.SetIndexBuffer(&index_buffer, 0);
 	rasterizer.SetPrimitiveType(PT_TRIANGLE_LIST);
 
 	int frames = 0;
@@ -87,13 +96,15 @@ int main() {
 	rasterizer.SetVertexShader(vs);
 	rasterizer.SetPixelShader(ps);
 
+	FpsCounter fps;
+	
 	while (true) {
 		//update world matrix rotation
-		mWorld = matrix_rotation<float>(angle);
-
-		vs->mView = mView;
+		fps.ComputeFPS();
+		std::cout << fps.PreciseFPS() << std::endl;
+		vs->mView = mView;// camera.world_to_camera_matrix();
 		vs->mProj = mProj;
-		vs->mWorld = mWorld;
+		vs->mWorld = matrix4x4_rotation<float>(angle);
 
 		texture_utils::fill<uint32_t>(backBuffer, 0x000000ff);
 		texture_utils::fill<float>(depthBuffer, 1.0f);

@@ -290,7 +290,7 @@ void BlockRasterizer::SetVertexBuffer(buffer* vb, size_t slot, size_t stride) {
 	vbSlots[slot].stride = stride;
 }
 
-void BlockRasterizer::set_index_buffer(buffer* ib, size_t slot){
+void BlockRasterizer::SetIndexBuffer(buffer* ib, size_t slot){
 	ibSlots[slot] = ib;
 }
 
@@ -374,15 +374,15 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 
 	//transform vertices to viewport space
 	p0->reg[0].x = (p0->reg[0].x * iw0) * scrW_h + scrW_h;
-	p0->reg[0].y = (p0->reg[0].y * iw0) * scrH_h + scrH_h;
+	p0->reg[0].y = -(p0->reg[0].y * iw0) * scrH_h + scrH_h;
 	p0->reg[0].z = (p0->reg[0].z * iw0);
 
 	p1->reg[0].x = (p1->reg[0].x * iw1) * scrW_h + scrW_h;
-	p1->reg[0].y = (p1->reg[0].y * iw1) * scrH_h + scrH_h;
+	p1->reg[0].y = -(p1->reg[0].y * iw1) * scrH_h + scrH_h;
 	p1->reg[0].z = (p1->reg[0].z * iw1);
 
 	p2->reg[0].x = (p2->reg[0].x * iw2) * scrW_h + scrW_h;
-	p2->reg[0].y = (p2->reg[0].y * iw2) * scrH_h + scrH_h;
+	p2->reg[0].y = -(p2->reg[0].y * iw2) * scrH_h + scrH_h;
 	p2->reg[0].z = (p2->reg[0].z * iw2);
 
 	float3 camZ(p0->reg[0].z, p1->reg[0].z, p2->reg[0].z);

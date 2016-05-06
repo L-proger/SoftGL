@@ -143,7 +143,7 @@ public:
 	void DrawIndexed(size_t index_count, size_t start_index_location);
     void FixupMapping();
     void SetVertexBuffer(buffer* vb, size_t slot, size_t stride);
-	void set_index_buffer(buffer* ib, size_t slot);
+	void SetIndexBuffer(buffer* ib, size_t slot);
 
     void SetInputLayout(IInputLayout* layout);
     void SetPixelShader(PixelShader* shader);
