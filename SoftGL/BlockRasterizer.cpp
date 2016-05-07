@@ -13,8 +13,10 @@ BlockRasterizer::BlockRasterizer()
 	NDCPlanes[0] = RasterizerPlane(0, 0, 0, 1);
 	NDCPlanes[1] = RasterizerPlane(1, 0, 0, 1);
 	NDCPlanes[2] = RasterizerPlane(-1, 0, 0, 1);
+
 	NDCPlanes[3] = RasterizerPlane(0, 1, 0, 1);
 	NDCPlanes[4] = RasterizerPlane(0, -1, 0, 1);
+
 	NDCPlanes[5] = RasterizerPlane(0, 0, 1, 1);
 	NDCPlanes[6] = RasterizerPlane(0, 0, -1, 1);
 
@@ -260,6 +262,11 @@ void BlockRasterizer::draw_impl(void* v0, void* v1, void* v2)
 	vs->Execute(&r1_in[0], &r1_out.reg[0]);
 	int numInterpolators = vs->Execute(&r2_in[0], &r2_out.reg[0]);
 
+
+	r0_out.reg[0].y = -r0_out.reg[0].y;
+	r1_out.reg[0].y = -r1_out.reg[0].y;
+	r2_out.reg[0].y = -r2_out.reg[0].y;
+
 	ClipVector cv;
 	ClipFace cf;
 	cf.v0 = r0_out;
@@ -362,27 +369,22 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 	RegisterBlock* p1 = &r1_src;
 	RegisterBlock* p2 = &r2_src;
 
-	//printf("W1: %f, W2: %f, W3: %f\n",p0->reg[0].W,p1->reg[0].W,p2->reg[0].W);
-
-
 	//p1->reg[0].W = abs(p1->reg[0].W);
 	float iw0 = 1.0f / p0->reg[0].w;
 	float iw1 = 1.0f / p1->reg[0].w;
 	float iw2 = 1.0f / p2->reg[0].w;
 
-	
-
 	//transform vertices to viewport space
 	p0->reg[0].x = (p0->reg[0].x * iw0) * scrW_h + scrW_h;
-	p0->reg[0].y = -(p0->reg[0].y * iw0) * scrH_h + scrH_h;
+	p0->reg[0].y = (p0->reg[0].y * iw0) * scrH_h + scrH_h;
 	p0->reg[0].z = (p0->reg[0].z * iw0);
 
 	p1->reg[0].x = (p1->reg[0].x * iw1) * scrW_h + scrW_h;
-	p1->reg[0].y = -(p1->reg[0].y * iw1) * scrH_h + scrH_h;
+	p1->reg[0].y = (p1->reg[0].y * iw1) * scrH_h + scrH_h;
 	p1->reg[0].z = (p1->reg[0].z * iw1);
 
 	p2->reg[0].x = (p2->reg[0].x * iw2) * scrW_h + scrW_h;
-	p2->reg[0].y = -(p2->reg[0].y * iw2) * scrH_h + scrH_h;
+	p2->reg[0].y = (p2->reg[0].y * iw2) * scrH_h + scrH_h;
 	p2->reg[0].z = (p2->reg[0].z * iw2);
 
 	float3 camZ(p0->reg[0].z, p1->reg[0].z, p2->reg[0].z);

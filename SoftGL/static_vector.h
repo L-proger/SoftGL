@@ -24,6 +24,7 @@ public:
 	}
 	bool push_back(const T& value){
 		if(full()){
+			assert(false && "Can't push");
 			return false;
 		}
 		_buffer[_size++] = value;

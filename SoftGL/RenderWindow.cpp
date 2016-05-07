@@ -4,6 +4,7 @@
 #define L_WIN32
 #include <winuser.h>
 
+
 RenderWindow::RenderWindow()
 	:UpdateCamera(false) {
 	bFullscreen = false;

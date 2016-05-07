@@ -50,7 +50,6 @@
     <ClInclude Include="Texture2D.h" />
     <ClInclude Include="TextureSampler.h" />
     <ClInclude Include="texture_utils.h" />
-    <ClInclude Include="Timer.h" />
     <ClInclude Include="Tools.h" />
     <ClInclude Include="Vector2D.h" />
     <ClInclude Include="Vector3D.h" />

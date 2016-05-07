@@ -1,7 +1,8 @@
 #ifndef camera_h__
 #define camera_h__
 
-class Game_object;
+#include "lmath.h"
+#include "gameobject.h"
 
 class Camera {
 public:
@@ -14,9 +15,13 @@ public:
 		fov(45.0f), near_clip(0.03f), far_clip(100.0f), aspect(1.0f), _object(object)
 	{}
 
-	float4x4 world_to_camera_matrix(){
+	lm::float4x4 world_to_camera_matrix(){
 		auto tf = _object->transform.get_global_transform();
 		return lm::matrix4x4_inverse(tf, false);
+	}
+	Game_object* GameObject()
+	{
+		return _object;
 	}
 private:
 	Game_object* _object;

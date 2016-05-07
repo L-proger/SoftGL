@@ -120,12 +120,10 @@ struct ClipFace
 	RegisterBlock v2;
 };
 
-
-
 class BlockRasterizer {
 public:
 	typedef Plane<float> RasterizerPlane;
-	typedef Static_vector<ClipFace, 2> ClipVector;
+	typedef Static_vector<ClipFace, 9> ClipVector;
 
     BlockRasterizer();
     ~BlockRasterizer();

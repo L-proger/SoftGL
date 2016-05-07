@@ -17,6 +17,11 @@
 #include "transform.h"
 #include "gameobject.h"
 #include "Camera.h"
+#include "Input.h"
+#include "camera_controller.h"
+#include "stopwatch.h"
+
+#pragma comment(lib, "lframework.lib")
 
 #if defined(_DEBUG)
 #pragma comment(lib, R"(D:\github\softgl\Debug\softgl.lib)")
@@ -27,8 +32,12 @@
 
 #include <FpsCounter.h>
 
+using namespace LFramework;
+
 int main() {
-	
+	auto input = Input::Instance();
+	auto keyboard = input->keyboards()[1];
+	auto mouse = input->mice()[0];
 
 	std::string tex_path = R"(C:\Users\Sergey\Desktop\tile2.bmp)";
 	Texture2D* tex = new Texture2D(tex_path.c_str());
@@ -36,15 +45,17 @@ int main() {
 	Game_object go;
 	Camera camera(&go);
 
-	go.transform.set_localPosition(float3(0.0f, 1.5, -3.0f));
-	go.transform.set_local_rotation(Quaternion_f::angle_axis(3.1415f / 7.0f, float3(1, 0, 0)));
+	CameraController camController(&camera);
+
+	go.transform.set_localPosition(float3(0.0f, 1.0f, -3.0f));
+	//go.transform.set_local_rotation(Quaternion_f::angle_axis(3.1415f / 7.0f, float3(1, 0, 0)));
 
 	int sx = 640;
 	int sy = 480;
 
 	RenderWindow* wnd = new RenderWindow();
-	wnd->SetSize(640, 480);
-	wnd->SetCaption("LOL");
+	wnd->SetSize(sx, sy);
+	wnd->SetCaption("SoftGL");
 	wnd->CenterWindow();
 
 	auto backBuffer = new Texture2D(sx, sy, 4);
@@ -77,8 +88,8 @@ int main() {
 		Vertex(float4(1.0f, -1.0f, 0, 1.0f), float2(1.0f, 1.0f)),
 	});
 
-	static_buffer<indices_t, 6> index_buffer({ 0,1,2, 0,2,3 });
-	*/
+	static_buffer<indices_t, 6> index_buffer({ 0,1,2, 0,2,3 });*/
+	
 
 	StaticInputLayout<2> layout;
 	layout.elements = {
@@ -108,8 +119,17 @@ int main() {
 	rasterizer.SetPixelShader(ps);
 
 	FpsCounter fps;
+
+	Stopwatch sw;
 	
 	while (true) {
+		auto deltaTime = sw.CheckMs().count() / 1000.0f;
+		sw.Reset();
+
+		input->strobe();
+		
+		camController.Tick(deltaTime);
+
 		//update world matrix rotation
 		fps.ComputeFPS();
 		std::cout << fps.PreciseFPS() << std::endl;
@@ -117,14 +137,16 @@ int main() {
 		vs->mProj = mProj;
 		vs->mWorld = matrix4x4_rotation<float>(angle);
 
-		texture_utils::fill<uint32_t>(backBuffer, 0x00232327);
+		//texture_utils::fill<uint32_t>(backBuffer, 0x00232327);
+		texture_utils::fill<uint32_t>(backBuffer, 0x00ff0000);
+
 		texture_utils::fill<float>(depthBuffer, 1.0f);
 
 		rasterizer.DrawIndexed(9, 0);
 		wnd->Present(backBuffer);
 
 		frames++;
-		angle += 0.1f;
+		angle += fps.GetTimeElapsed();
 		if (angle > 100000.0f)
 			angle = 0.0f;
 		wnd->Update();

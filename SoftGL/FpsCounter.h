@@ -1,6 +1,7 @@
 #ifndef FpsCounter_h__
 #define FpsCounter_h__
-#include "Timer.h"
+
+#include "stopwatch.h"
 
 #define MAX_AVG_STEPS 20
 
@@ -18,10 +19,12 @@ public:
 	}
 	void ComputeFPS()
 	{
-		t.Stop();
-		fps = 1.0f / t.getTimeElapsed();
-		timeElapsed = t.getTimeElapsed();
-		t.Start();
+		auto ms = _sw.CheckMs();
+		_sw.Reset();
+
+		timeElapsed = ms.count() / 1000.0f;
+		fps = 1.0f / timeElapsed;
+		
 
 		position++;
 		
@@ -51,7 +54,7 @@ public:
 		return timeElapsed;
 	}
 private:
-	Timer t;
+	LFramework::Stopwatch _sw;
 	float fps;
 	float timeElapsed;
 	float avgFps;
