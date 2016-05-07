@@ -29,11 +29,15 @@
 
 int main() {
 	
+
+	std::string tex_path = R"(C:\Users\Sergey\Desktop\tile2.bmp)";
+	Texture2D* tex = new Texture2D(tex_path.c_str());
+
 	Game_object go;
 	Camera camera(&go);
 
-	go.transform.set_localPosition(float3(0.0f, 1.5f, -3.5f));
-	//go.transform.set_local_rotation()
+	go.transform.set_localPosition(float3(0.0f, 1.5, -3.0f));
+	go.transform.set_local_rotation(Quaternion_f::angle_axis(3.1415f / 7.0f, float3(1, 0, 0)));
 
 	int sx = 640;
 	int sy = 480;
@@ -46,17 +50,14 @@ int main() {
 	auto backBuffer = new Texture2D(sx, sy, 4);
 	auto depthBuffer = new Texture2D(sx, sy, 4);
 
-	std::string tex_path = R"(C:\Users\Sergey\Desktop\test.bmp)";
-	Texture2D* tex = new Texture2D(tex_path.c_str());
+
 
 	BlockRasterizer rasterizer;
 
 	float4x4 mWorld;
-	float4x4 mView;
 	float4x4 mProj;
 
 	mWorld = float4x4::identity();
-	mView = lm::matrix4x4_lookat_lh(float3(0.0f, 1.5f, -3.5f), float3(0.0f, 1.5f, 0.0f), float3(0.0f, 1.0f, 0.0f));
 	mProj = matrix4x4_perspective(3.1415f / 4.0f, (float)sx / (float)sy, 0.1f, 100.0f);
 
 	static_buffer<Vertex, 5> vertex_buffer({
@@ -64,10 +65,20 @@ int main() {
 		Vertex(float4(-1.0f, 0.0f, 1.0f, 1.0f), float2(0.0f, 0.0f)),
 		Vertex(float4(1.0f, 0.0f, 1.0f, 1.0f), float2(1.0f, 0.0f)),
 		Vertex(float4(1.0f, 0.0f, -1.0f, 1.0f), float2(1.0f, 1.0f)),
-		Vertex(float4(0.0f, 1.0f, 0.0f, 1.0f), float2(0.5f, 0.0f)),
+		Vertex(float4(0.0f, 1.0f, 0.0f, 1.0f), float2(1.0f, 0.5f)),
 	});
 
 	static_buffer<indices_t, 9> index_buffer({0,1,2, 0,2,3, 0,1,4});
+
+	/*static_buffer<Vertex, 4> vertex_buffer({
+		Vertex(float4(-1.0f, -1.0f, 0, 1.0f), float2(0.0f, 1.0f)),
+		Vertex(float4(-1.0f, 1.0f, 0, 1.0f), float2(0.0f, 0.0f)),
+		Vertex(float4(1.0f, 1.0f, 0, 1.0f), float2(1.0f, 0.0f)),
+		Vertex(float4(1.0f, -1.0f, 0, 1.0f), float2(1.0f, 1.0f)),
+	});
+
+	static_buffer<indices_t, 6> index_buffer({ 0,1,2, 0,2,3 });
+	*/
 
 	StaticInputLayout<2> layout;
 	layout.elements = {
@@ -102,11 +113,11 @@ int main() {
 		//update world matrix rotation
 		fps.ComputeFPS();
 		std::cout << fps.PreciseFPS() << std::endl;
-		vs->mView = mView;// camera.world_to_camera_matrix();
+		vs->mView = camera.world_to_camera_matrix();
 		vs->mProj = mProj;
 		vs->mWorld = matrix4x4_rotation<float>(angle);
 
-		texture_utils::fill<uint32_t>(backBuffer, 0x000000ff);
+		texture_utils::fill<uint32_t>(backBuffer, 0x00232327);
 		texture_utils::fill<float>(depthBuffer, 1.0f);
 
 		rasterizer.DrawIndexed(9, 0);

@@ -6,6 +6,12 @@
 #include "Bitmap.h"
 #include <stdio.h>
 
+struct Color24{
+	uint8_t b;
+	uint8_t g;
+	uint8_t r;
+};
+
 class Texture2D {
 public:
 	size_t width;
@@ -46,14 +52,25 @@ public:
 		//move file point to the begging of bitmap data
 		fseek(filePtr, bitmapFileHeader.bfOffBits, SEEK_SET);
 
-		data = std::move(dynamic_buffer<uint8_t>(bitmapInfoHeader.biWidth * bitmapInfoHeader.biHeight * bitmapInfoHeader.biBitCount / 8));
-
-		//read in the bitmap image data
-		fread(data.get_pointer(),bitmapInfoHeader.biWidth * bitmapInfoHeader.biHeight * bitmapInfoHeader.biBitCount / 8, 1, filePtr);
-
 		width = bitmapInfoHeader.biWidth;
 		height = bitmapInfoHeader.biHeight;
 		bpp = bitmapInfoHeader.biBitCount / 8;
+
+		auto bytes_count = width * height * bpp;
+		data = std::move(dynamic_buffer<uint8_t>(bytes_count));
+
+		auto stride = width * bpp;
+		auto padding = stride % 4 == 0 ? 0 : (4 - (stride % 4));
+		uint8_t* ptr = (uint8_t*)data.get_pointer();
+
+		//read in the bitmap image data
+		for(size_t y = 0; y < height; ++y){
+			auto dst_ptr = ptr + stride * (height - 1 - y);
+			auto result = fread(dst_ptr, 1, stride, filePtr);
+			if(padding != 0){
+				fseek(filePtr, padding, SEEK_CUR);
+			}
+		}
 
 		fclose(filePtr);
 	}
