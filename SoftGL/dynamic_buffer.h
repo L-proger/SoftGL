@@ -55,6 +55,10 @@ public:
 		return _size;
 	}
 
+	virtual size_t item_size() override {
+		return sizeof(T);
+	}
+
 private:
 	size_t _size;
 	T* _data;

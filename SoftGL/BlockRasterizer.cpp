@@ -254,9 +254,11 @@ void BlockRasterizer::draw_impl(void* v0, void* v1, void* v2)
 	for (int i = 0; i < elements; i++) { //TODO: OMG WTF! Fix memory corruption!!!
 		InputElement* e = geomLayout->GetElement(i);
 		int rd = regMapping[i];
-		r0_in[rd] = reinterpret_cast<float4*>((uint8_t*)v0 + e->Offset);
-		r1_in[rd] = reinterpret_cast<float4*>((uint8_t*)v1 + e->Offset);
-		r2_in[rd] = reinterpret_cast<float4*>((uint8_t*)v2 + e->Offset);
+		if(rd >= 0){
+			r0_in[rd] = reinterpret_cast<float4*>((uint8_t*)v0 + e->Offset);
+			r1_in[rd] = reinterpret_cast<float4*>((uint8_t*)v1 + e->Offset);
+			r2_in[rd] = reinterpret_cast<float4*>((uint8_t*)v2 + e->Offset);
+		}
 	}
 	vs->Execute(&r0_in[0], &r0_out.reg[0]);
 	vs->Execute(&r1_in[0], &r1_out.reg[0]);

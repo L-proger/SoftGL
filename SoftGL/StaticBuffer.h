@@ -6,7 +6,10 @@
 template<typename T, size_t Size>
 struct static_buffer : public buffer {
 	std::array<T, Size> data;
-	
+	static_buffer() {
+
+		//static_assert(init.size() == Size, "Incorrect number of parameters");
+	}
 	static_buffer(const std::array<T, Size>& values):data(values){
 
 		//static_assert(init.size() == Size, "Incorrect number of parameters");
@@ -18,6 +21,10 @@ struct static_buffer : public buffer {
 
 	virtual size_t size() override {
 		return Size * sizeof(T);
+	}
+
+	virtual size_t item_size() override {
+		return sizeof(T);
 	}
 };
 

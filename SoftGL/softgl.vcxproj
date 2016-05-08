@@ -31,12 +31,8 @@
     <ClInclude Include="InputSystem.h" />
     <ClInclude Include="IRenderWindow.h" />
     <ClInclude Include="IShader.h" />
-    <ClInclude Include="LMath_.h" />
     <ClInclude Include="LString.h" />
-    <ClInclude Include="Matrix3x3.h" />
-    <ClInclude Include="Matrix4x4.h" />
     <ClInclude Include="PixelShader.h" />
-    <ClInclude Include="Plane_.h" />
     <ClInclude Include="PSDefault.h" />
     <ClInclude Include="PSFont.h" />
     <ClInclude Include="PSTextured.h" />
@@ -51,9 +47,6 @@
     <ClInclude Include="TextureSampler.h" />
     <ClInclude Include="texture_utils.h" />
     <ClInclude Include="Tools.h" />
-    <ClInclude Include="Vector2D.h" />
-    <ClInclude Include="Vector3D.h" />
-    <ClInclude Include="Vector4D.h" />
     <ClInclude Include="Vertex.h" />
     <ClInclude Include="VertexShader.h" />
     <ClInclude Include="Viewport.h" />

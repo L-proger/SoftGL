@@ -20,6 +20,8 @@
 #include "Input.h"
 #include "camera_controller.h"
 #include "stopwatch.h"
+#include "mesh.h"
+#include "cube_generator.h"
 
 #pragma comment(lib, "lframework.lib")
 
@@ -34,6 +36,16 @@
 
 using namespace LFramework;
 
+
+void DrawMesh(BlockRasterizer* rasterizer, IMesh* mesh) {
+	rasterizer->SetVertexBuffer(mesh->GetVertexBuffer(), 0, mesh->GetVertexBuffer()->item_size());
+	for (size_t i = 0; i < mesh->GetSubmeshCount(); ++i) {
+		auto ib = mesh->GetSubmeshBuffer(i);
+		rasterizer->SetIndexBuffer(ib, 0);
+		rasterizer->DrawIndexed(ib->size() / ib->item_size(), 0);
+	}
+}
+
 int main() {
 	auto input = Input::Instance();
 	auto keyboard = input->keyboards()[1];
@@ -46,9 +58,10 @@ int main() {
 	Camera camera(&go);
 
 	CameraController camController(&camera);
-
+	
 	go.transform.set_localPosition(float3(0.0f, 1.0f, -3.0f));
 	//go.transform.set_local_rotation(Quaternion_f::angle_axis(3.1415f / 7.0f, float3(1, 0, 0)));
+
 
 	int sx = 640;
 	int sy = 480;
@@ -71,36 +84,30 @@ int main() {
 	mWorld = float4x4::identity();
 	mProj = matrix4x4_perspective(3.1415f / 4.0f, (float)sx / (float)sy, 0.1f, 100.0f);
 
-	static_buffer<Vertex, 5> vertex_buffer({
-		Vertex(float4(-1.0f, 0.0f, -1.0f, 1.0f), float2(0.0f, 1.0f)),
-		Vertex(float4(-1.0f, 0.0f, 1.0f, 1.0f), float2(0.0f, 0.0f)),
-		Vertex(float4(1.0f, 0.0f, 1.0f, 1.0f), float2(1.0f, 0.0f)),
-		Vertex(float4(1.0f, 0.0f, -1.0f, 1.0f), float2(1.0f, 1.0f)),
-		Vertex(float4(0.0f, 1.0f, 0.0f, 1.0f), float2(1.0f, 0.5f)),
-	});
+	static_buffer<Vertex, CubeGenerator<Vertex, indices_t>::VertexCount> vertex_buffer;
 
-	static_buffer<indices_t, 9> index_buffer({0,1,2, 0,2,3, 0,1,4});
+	static_buffer<indices_t, CubeGenerator<Vertex, indices_t>::IndexCount> index_buffer;
 
-	/*static_buffer<Vertex, 4> vertex_buffer({
-		Vertex(float4(-1.0f, -1.0f, 0, 1.0f), float2(0.0f, 1.0f)),
-		Vertex(float4(-1.0f, 1.0f, 0, 1.0f), float2(0.0f, 0.0f)),
-		Vertex(float4(1.0f, 1.0f, 0, 1.0f), float2(1.0f, 0.0f)),
-		Vertex(float4(1.0f, -1.0f, 0, 1.0f), float2(1.0f, 1.0f)),
-	});
+	Mesh<1> mesh;
+	mesh.vertexBuffer = &vertex_buffer;
+	mesh.submeshes[0] = &index_buffer;
 
-	static_buffer<indices_t, 6> index_buffer({ 0,1,2, 0,2,3 });*/
-	
+	CubeGenerator<Vertex, indices_t>::Generate(&mesh);
 
-	StaticInputLayout<2> layout;
+
+	StaticInputLayout<3> layout;
 	layout.elements = {
 		InputElement("POSITION", 0, RegType::float4, 0),
-		InputElement("TEXCOORD", 16, RegType::float2, 0)
+		InputElement("NORMAL", 16, RegType::float3, 0),
+		InputElement("TEXCOORD", 28, RegType::float2, 0)
 	};
 
 	rasterizer.SetInputLayout(&layout);
-	rasterizer.SetVertexBuffer(&vertex_buffer, 0, Vertex::stride());
-	rasterizer.SetIndexBuffer(&index_buffer, 0);
 	rasterizer.SetPrimitiveType(PT_TRIANGLE_LIST);
+
+
+	Vertex v;
+	auto offset = ((int)&v.UV0) - ((int)&v);
 
 	int frames = 0;
 	float angle = 0.0f;
@@ -142,7 +149,8 @@ int main() {
 
 		texture_utils::fill<float>(depthBuffer, 1.0f);
 
-		rasterizer.DrawIndexed(9, 0);
+		DrawMesh(&rasterizer, &mesh);
+
 		wnd->Present(backBuffer);
 
 		frames++;

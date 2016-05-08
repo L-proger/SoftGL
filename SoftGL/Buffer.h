@@ -23,5 +23,9 @@ public:
 	}
 	virtual void* get_pointer() = 0;
 	virtual size_t size() = 0;
+	virtual size_t item_size()
+	{
+		return 1;
+	}
 };
 #endif // Buffer_h__

@@ -13,11 +13,29 @@ public:
 
 	}
 	float4 Execute(float4* input) {
-		float4 result = float4(0, 0, 0, 0);
+		
+		float3 N = lm::normalize(input[2].xyz);
+		float3 L = lm::normalize(float3(4, 1, 3));
+
+		float NdotL = std::max<float>(0, lm::dot(N, L));
+
+		float3 result = float3(0, 0, 0);
+		float4 diffuse = float4(0, 0, 0, 0);
+		float3 ambient = float3(0.1f, 0.1f, 0.2f);
+
+		
+
 		if(diffuse_map != nullptr){
-			tex2D(diffuse_map, &result, input[1].x, input[1].y, TextureFilter::Bilinear);
+			tex2D(diffuse_map, &diffuse, input[1].x, input[1].y, TextureFilter::Bilinear);
 		}
-		return result;
+
+		result = diffuse.xyz * NdotL;
+		result += ambient * diffuse.xyz;
+
+		float4 retval;
+		retval.xyz = result;
+		retval.w = diffuse.w;
+		return retval;
 	}
 };
 #endif // PSDefault_h__
