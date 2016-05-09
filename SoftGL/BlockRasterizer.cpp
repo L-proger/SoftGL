@@ -1,6 +1,7 @@
 #include "BlockRasterizer.h"
 #include "TextureSampler.h"
 #include <assert.h>
+#include <iostream>
 
 BlockRasterizer::BlockRasterizer()
 	:primitiveType(PT_TRIANGLE_LIST), vs(0), ps(0), geomLayout(0){
@@ -10,15 +11,13 @@ BlockRasterizer::BlockRasterizer()
 	blendState.DstAlpha = BLEND_INV_SRC_ALPHA;
 	blendState.BlendEnable = false;
 
-	NDCPlanes[0] = RasterizerPlane(0, 0, 0, 1);
-	NDCPlanes[1] = RasterizerPlane(1, 0, 0, 1);
-	NDCPlanes[2] = RasterizerPlane(-1, 0, 0, 1);
-
-	NDCPlanes[3] = RasterizerPlane(0, 1, 0, 1);
-	NDCPlanes[4] = RasterizerPlane(0, -1, 0, 1);
-
-	NDCPlanes[5] = RasterizerPlane(0, 0, 1, 1);
-	NDCPlanes[6] = RasterizerPlane(0, 0, -1, 1);
+	NDCPlanes[0] = RasterizerPlane(0, 0, 0, 1);//WTF?
+	NDCPlanes[1] = RasterizerPlane(1, 0, 0, 1);//left
+	NDCPlanes[2] = RasterizerPlane(-1, 0, 0, 1);//right
+	NDCPlanes[3] = RasterizerPlane(0, 1, 0, 1);//top
+	NDCPlanes[4] = RasterizerPlane(0, -1, 0, 1);//bottom
+	NDCPlanes[5] = RasterizerPlane(0, 0, 1, 0);//near plane (D3D NDC, NeraClip Z == 0)
+	NDCPlanes[6] = RasterizerPlane(0, 0, -1, 1);//far
 
 	for (int i = 0; i < MAX_TEX_SLOTS; i++)
 		tex_slots[i] = 0;
@@ -40,10 +39,10 @@ int BlockRasterizer::GetPointNDCZone(const float4& point) {
 	return flags;
 }
 
-void BlockRasterizer::ClipToFrustumPlane(RasterizerPlane plane, ClipVector& src, ClipVector& dst) {
+bool BlockRasterizer::ClipToFrustumPlane(RasterizerPlane plane, ClipVector& src, ClipVector& dst) {
 	auto face_count = src.size();
-
-	for (int i = 0; i < face_count; i++) {
+	bool clipped = false;
+	for (size_t i = 0; i < face_count; i++) {
 		//read face from input
 		ClipFace face = src[i];
 		int v0out, v1out, v2out, vout_cnt;
@@ -54,13 +53,13 @@ void BlockRasterizer::ClipToFrustumPlane(RasterizerPlane plane, ClipVector& src,
 
 
 		switch (vout_cnt) {
-		case 3://all 3 vertices behind near plane! BURN IT WITH FIRE!!!! ARRRRR!
+		case 3://all 3 vertices behind plane! Clip entire triangle
+			clipped = true;
 			continue;
-			break;
 		case 2:
 		{
 			//printf("2 vertices behind plane!\n");
-
+			clipped = true;
 			RegisterBlock* vert[3];
 			RegisterBlock vA, vB;
 			if (v0out && v1out) { vert[0] = &face.v0; vert[1] = &face.v1; vert[2] = &face.v2; }
@@ -70,7 +69,7 @@ void BlockRasterizer::ClipToFrustumPlane(RasterizerPlane plane, ClipVector& src,
 			float alpha_a = lm::dot(plane, vert[2]->reg[0]) / (lm::dot(plane, vert[2]->reg[0]) - lm::dot(plane, vert[1]->reg[0]));
 			float alpha_b = lm::dot(plane, vert[2]->reg[0]) / (lm::dot(plane, vert[2]->reg[0]) - lm::dot(plane, vert[0]->reg[0]));
 
-			for (int k = 0; k < geomLayout->Size(); k++) {
+			for (size_t k = 0; k < geomLayout->Size(); k++) {
 				vA.reg[k] = vert[2]->reg[k] + (vert[1]->reg[k] - vert[2]->reg[k]) * alpha_a;
 				vB.reg[k] = vert[2]->reg[k] + (vert[0]->reg[k] - vert[2]->reg[k]) * alpha_b;
 			}
@@ -85,6 +84,7 @@ void BlockRasterizer::ClipToFrustumPlane(RasterizerPlane plane, ClipVector& src,
 		break;
 		case 1:
 		{
+			clipped = true;
 			RegisterBlock* vert[3];
 			RegisterBlock vA, vB;
 			if (v0out) { vert[0] = &face.v0; vert[1] = &face.v1; vert[2] = &face.v2; }
@@ -94,7 +94,7 @@ void BlockRasterizer::ClipToFrustumPlane(RasterizerPlane plane, ClipVector& src,
 			float alpha_a = lm::dot(plane, vert[2]->reg[0]) / (lm::dot(plane, vert[2]->reg[0]) - lm::dot(plane, vert[0]->reg[0]));
 			float alpha_b = lm::dot(plane, vert[1]->reg[0]) / (lm::dot(plane, vert[1]->reg[0]) - lm::dot(plane, vert[0]->reg[0]));
 
-			for (int k = 0; k < geomLayout->Size(); k++) {
+			for (size_t k = 0; k < geomLayout->Size(); k++) {
 				vA.reg[k] = vert[2]->reg[k] + (vert[0]->reg[k] - vert[2]->reg[k]) * alpha_a;
 				vB.reg[k] = vert[1]->reg[k] + (vert[0]->reg[k] - vert[1]->reg[k]) * alpha_b;
 			}
@@ -119,6 +119,7 @@ void BlockRasterizer::ClipToFrustumPlane(RasterizerPlane plane, ClipVector& src,
 			break;
 		}
 	}
+	return clipped;
 }
 
 void BlockRasterizer::ClipToFrustum(ClipFace face, ClipVector& dst) {
@@ -128,23 +129,37 @@ void BlockRasterizer::ClipToFrustum(ClipFace face, ClipVector& dst) {
 
 	cv1.push_back(face);
 
-	ClipToFrustumPlane(NDCPlanes[0], cv1, cv2);
+	if(ClipToFrustumPlane(NDCPlanes[0], cv1, cv2)){
+		std::cout << "Clipped with plane 0" << std::endl;
+	}
 	cv1.clear();
 
-	ClipToFrustumPlane(NDCPlanes[1], cv2, cv1);
+	if (ClipToFrustumPlane(NDCPlanes[1], cv2, cv1)) {
+		std::cout << "Clipped with plane 1" << std::endl;
+	}
 	cv2.clear();
 
-	ClipToFrustumPlane(NDCPlanes[2], cv1, cv2);
+	if (ClipToFrustumPlane(NDCPlanes[2], cv1, cv2)) {
+		std::cout << "Clipped with plane 2" << std::endl;
+	}
 	cv1.clear();
 
-	ClipToFrustumPlane(NDCPlanes[3], cv2, cv1);
+	if (ClipToFrustumPlane(NDCPlanes[3], cv2, cv1)) {
+		std::cout << "Clipped with plane 3" << std::endl;
+	}
 	cv2.clear();
 
-	ClipToFrustumPlane(NDCPlanes[4], cv1, cv2);
+	if (ClipToFrustumPlane(NDCPlanes[4], cv1, cv2)) {
+		std::cout << "Clipped with plane 4" << std::endl;
+	}
 	cv1.clear();
 
-	ClipToFrustumPlane(NDCPlanes[5], cv2, cv1);
-	ClipToFrustumPlane(NDCPlanes[6], cv1, dst);
+	if (ClipToFrustumPlane(NDCPlanes[5], cv2, cv1)) {
+		std::cout << "Clipped with plane 5" << std::endl;
+	}
+	if (ClipToFrustumPlane(NDCPlanes[6], cv1, dst)) {
+		std::cout << "Clipped with plane 6" << std::endl;
+	}
 }
 
 Texture2D* BlockRasterizer::GetBackBuffer() {
@@ -167,12 +182,12 @@ void BlockRasterizer::SetPrimitiveType(int type) {
 	primitiveType = type;
 }
 
-void BlockRasterizer::Draw(int offset, int length) {
+void BlockRasterizer::Draw(size_t offset, size_t length) {
 	if (!length) return;
 	switch (primitiveType) {
 	case PT_TRIANGLE_LIST:
 	{
-		int faceCount = length / 3;
+		auto faceCount = length / 3;
 		buffer* geom = vbSlots[0].buffer;
 
 		if (!faceCount){
@@ -184,7 +199,7 @@ void BlockRasterizer::Draw(int offset, int length) {
 			return;
 		}
 
-		int stride = vbSlots[0].stride;
+		auto stride = vbSlots[0].stride;
 
 		//buffer is too small for this draw call
 		if (geom->size() / stride < faceCount * 3) {
@@ -192,7 +207,7 @@ void BlockRasterizer::Draw(int offset, int length) {
 			return;
 		}
 		uint8_t* data = (uint8_t*)geom->get_pointer();
-		for (int i = 0; i < faceCount; i++) {
+		for (size_t i = 0; i < faceCount; i++) {
 			//setup vertex data pointers
 			uint8_t* v0 = data + ((offset + 0 + i * 3) * stride);
 			uint8_t* v1 = data + ((offset + 1 + i * 3) * stride);
@@ -287,7 +302,7 @@ void BlockRasterizer::FixupMapping() {
 	if (geomLayout != 0) {
 		if (vs != 0) {
 			auto elements = geomLayout->Size();
-			for (int i = 0; i < elements; i++) {
+			for (size_t i = 0; i < elements; i++) {
 				regMapping[i] = vs->FindRegister(geomLayout->GetElement(i)->name);
 			}
 		}
@@ -488,22 +503,22 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 
 	if (maxY < 0)
 		return;
-	if (minY >= backBuffer->height)
+	if (minY >= (int)backBuffer->height)
 		return;
 	if (maxX < 0)
 		return;
-	if (minX >= backBuffer->width)
+	if (minX >= (int)backBuffer->width)
 		return;
 
 	if (minY < 0)
 		minY = 0;
-	if (maxY >= backBuffer->height)
-		maxY = backBuffer->height - 1;
+	if (maxY >= (int)backBuffer->height)
+		maxY = (int)backBuffer->height - 1;
 
 	if (minX < 0)
 		minX = 0;
-	if (maxX >= backBuffer->width)
-		maxX = backBuffer->width - 1;
+	if (maxX >= (int)backBuffer->width)
+		maxX = (int)backBuffer->width - 1;
 
 
 	int blockSize = 8;

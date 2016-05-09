@@ -113,6 +113,16 @@ enum NDCZone
     ZONE_NEAR = 6
 };
 
+static constexpr const char* NDCZoneStr[7]{
+	"ZONE_ZERO",
+	"ZONE_LEFT",
+	"ZONE_RIGHT",
+	"ZONE_BOTTOM",
+	"ZONE_TOP",
+	"ZONE_FAR",
+	"ZONE_NEAR"
+};
+
 struct ClipFace
 {
 	RegisterBlock v0;
@@ -128,7 +138,7 @@ public:
     BlockRasterizer();
     ~BlockRasterizer();
     int GetPointNDCZone(const float4& point);
-    void ClipToFrustumPlane(RasterizerPlane plane, ClipVector& src, ClipVector& dst);
+	bool ClipToFrustumPlane(RasterizerPlane plane, ClipVector& src, ClipVector& dst);
     void ClipToFrustum(ClipFace face, ClipVector& dst);
     Texture2D* GetBackBuffer();
     Texture2D* GetDepthBuffer();
@@ -137,7 +147,7 @@ public:
 	void set_depth_buffer(Texture2D* buffer);
 
     void SetPrimitiveType(int type);
-    void Draw(int offset, int length);
+    void Draw(size_t offset, size_t length);
 	void DrawIndexed(size_t index_count, size_t start_index_location);
     void FixupMapping();
     void SetVertexBuffer(buffer* vb, size_t slot, size_t stride);

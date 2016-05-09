@@ -57,6 +57,7 @@ RenderWindow::RenderWindow()
 	if (!(g_hwnd = CreateWindowEx(NULL, _text("Onotole"), _text("LifeEngine render window"), WS_OVERLAPPEDWINDOW,
 		NewWindowSize.left, NewWindowSize.top, NewWindowSize.right - NewWindowSize.left, NewWindowSize.bottom - NewWindowSize.top, NULL, NULL, g_hInst, NULL))) {
 		MessageBox(g_hwnd, _text("Can not create window! We all gonna die!!"), _text("HOLY SHIT!"), MB_OK);
+		return;
 	}
 
 	ShowWindow(g_hwnd, SW_SHOWNORMAL);

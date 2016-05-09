@@ -37,9 +37,11 @@
 using namespace LFramework;
 
 
-void DrawMesh(BlockRasterizer* rasterizer, IMesh* mesh) {
+void DrawMesh(BlockRasterizer* rasterizer, IMesh* mesh)
+{
 	rasterizer->SetVertexBuffer(mesh->GetVertexBuffer(), 0, mesh->GetVertexBuffer()->item_size());
-	for (size_t i = 0; i < mesh->GetSubmeshCount(); ++i) {
+	for (size_t i = 0; i < mesh->GetSubmeshCount(); ++i)
+	{
 		auto ib = mesh->GetSubmeshBuffer(i);
 		rasterizer->SetIndexBuffer(ib, 0);
 		rasterizer->DrawIndexed(ib->size() / ib->item_size(), 0);
@@ -47,7 +49,8 @@ void DrawMesh(BlockRasterizer* rasterizer, IMesh* mesh) {
 	}
 }
 
-int main() {
+int main()
+{
 	auto input = Input::Instance();
 	auto keyboard = input->keyboards()[1];
 	auto mouse = input->mice()[0];
@@ -59,11 +62,8 @@ int main() {
 	Camera camera(&go);
 
 	CameraController camController(&camera);
-	
-	go.transform.set_localPosition(float3(0, 0, -5.2f));
-	//go.transform.set_local_rotation(Quaternion_f::angle_axis(3.1415f / 7.0f, float3(1, 0, 0)));
-//	go.transform.set_local_rotation(Quaternion_f::angle_axis(3.1415f / 4.0f, float3(0, 0, 1)));
 
+	go.transform.set_localPosition(float3(0, 0, -10.0f));
 
 	int sx = 640;
 	int sy = 480;
@@ -79,13 +79,13 @@ int main() {
 	Mesh<1> quad;
 
 	static_buffer<Vertex, 4> quad_vb{{
-		Vertex{ lm::float4(-1, 1,0,1), lm::float2(0,0) },
-		Vertex{ lm::float4( 1, 1,0,1), lm::float2(1,0) },
-		Vertex{ lm::float4( 1,-1,0,1), lm::float2(1,1) },
-		Vertex{ lm::float4(-1,-1,0,1), lm::float2(0,1) }
+		Vertex{lm::float4(-1, 1, 0, 1), lm::float2(0, 0)},
+		Vertex{lm::float4(1, 1, 0, 1), lm::float2(1, 0)},
+		Vertex{lm::float4(1, -1, 0, 1), lm::float2(1, 1)},
+		Vertex{lm::float4(-1, -1, 0, 1), lm::float2(0, 1)}
 	}};
 
-	static_buffer<indices_t, 6> quad_ib{ {0,1,3,3,1,2} };
+	static_buffer<indices_t, 6> quad_ib{{0,1,3,3,1,2}};
 
 	quad.vertexBuffer = &quad_vb;
 	quad.submeshes[0] = &quad_ib;
@@ -97,7 +97,7 @@ int main() {
 	float4x4 mProj;
 
 	mWorld = float4x4::identity();
-	mProj = matrix4x4_perspective(3.1415f / 4.0f, (float)sx / (float)sy, 0.1f, 100.0f);
+	mProj = matrix4x4_perspective(3.1415f / 4.0f, (float)sx / (float)sy, 10.0f, 20.0f);
 
 	static_buffer<Vertex, CubeGenerator<Vertex, indices_t>::VertexCount> vertex_buffer;
 
@@ -143,8 +143,9 @@ int main() {
 	FpsCounter fps;
 
 	Stopwatch sw;
-	
-	while (true) {
+
+	while (true)
+	{
 		auto deltaTime = sw.CheckMs().count() / 1000.0f;
 		sw.Reset();
 
@@ -175,8 +176,6 @@ int main() {
 		std::cout << angle << std::endl;
 		frames++;
 		angle += fps.GetTimeElapsed();
-		if (angle > 100000.0f)
-			angle = 0.0f;
 		wnd->Update();
 	}
 

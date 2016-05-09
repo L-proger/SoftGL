@@ -56,10 +56,10 @@ public:
 			float fx1 = 1.0f - fx;
 			float fy1 = 1.0f - fy;
 
-			int w1 = fx1 * fy1 * 256.0f;
-			int w2 = fx  * fy1 * 256.0f;
-			int w3 = fx1 * fy  * 256.0f;
-			int w4 = fx  * fy  * 256.0f;
+			int w1 = (int)(fx1 * fy1 * 256.0f);
+			int w2 = (int)(fx  * fy1 * 256.0f);
+			int w3 = (int)(fx1 * fy  * 256.0f);
+			int w4 = (int)(fx  * fy  * 256.0f);
 
 			auto mem = reinterpret_cast<uint8_t*>(tex->getBuffer()->get_pointer());
 
