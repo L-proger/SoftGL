@@ -16,7 +16,7 @@ static inline uint32_t sample2D(Texture2D* tex, float tX, float tY)
 
     int x = static_cast<int>((tX * ((float)tex->width - 1.0f)));
     int y = static_cast<int>((tY * ((float)tex->height - 1.0f)));
-    uint8_t* ptr = reinterpret_cast<uint8_t*>(tex->getBuffer()->get_pointer());
+    uint8_t* ptr = reinterpret_cast<uint8_t*>(tex->getBuffer()->GetPointer());
 
 
     float pX = tX * (float)tex->width;
@@ -25,7 +25,7 @@ static inline uint32_t sample2D(Texture2D* tex, float tX, float tY)
     uint32_t frX = (uint32_t)((pX - (float)((int)pX))* 255.0f);
     uint32_t frY = (uint32_t)((pY - (float)((int)pY))* 255.0f);
 
-    uint32_t* ptr2 = reinterpret_cast<uint32_t*>(tex->getBuffer()->get_pointer());
+    uint32_t* ptr2 = reinterpret_cast<uint32_t*>(tex->getBuffer()->GetPointer());
 
     uint32_t color;
   //  if(tex->bpp < 4)

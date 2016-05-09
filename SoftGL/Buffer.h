@@ -5,25 +5,25 @@
 #include <cstdint>
 #include "Debug.h"
 
-class buffer {
+class Buffer {
 public:
-	constexpr buffer()
+	constexpr Buffer()
 	{
 		
 	}
-	virtual ~buffer() = default;
-	void write(void* src, size_t offset, size_t length){
+	virtual ~Buffer() = default;
+	void Write(void* src, size_t offset, size_t length){
 		SGL_ASSERT(src != nullptr, "Invalid pointer");
-		SGL_ASSERT((offset + length) <= size(), "Invalid pointer");
+		SGL_ASSERT((offset + length) <= Size(), "Invalid pointer");
 
-		memcpy((uint8_t*)get_pointer() + offset, src, length);
+		memcpy((uint8_t*)GetPointer() + offset, src, length);
 	}
-	void read(void* dst, size_t offset, int length){
-		memcpy(dst, (uint8_t*)get_pointer() + offset, length);
+	void Read(void* dst, size_t offset, int length){
+		memcpy(dst, (uint8_t*)GetPointer() + offset, length);
 	}
-	virtual void* get_pointer() = 0;
-	virtual size_t size() = 0;
-	virtual size_t item_size()
+	virtual void* GetPointer() = 0;
+	virtual size_t Size() = 0;
+	virtual size_t ItemSize()
 	{
 		return 1;
 	}

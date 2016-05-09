@@ -38,6 +38,7 @@
     <ClInclude Include="PSTextured.h" />
     <ClInclude Include="RasterizerSettings.h" />
     <ClInclude Include="Ray.h" />
+    <ClInclude Include="RegisterBlock.h" />
     <ClInclude Include="RenderWindow.h" />
     <ClInclude Include="RenderWindowXORG.h" />
     <ClInclude Include="ResourceManager.h" />

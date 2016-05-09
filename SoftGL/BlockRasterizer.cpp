@@ -18,25 +18,10 @@ BlockRasterizer::BlockRasterizer()
 	NDCPlanes[4] = RasterizerPlane(0, -1, 0, 1);//bottom
 	NDCPlanes[5] = RasterizerPlane(0, 0, 1, 0);//near plane (D3D NDC, NeraClip Z == 0)
 	NDCPlanes[6] = RasterizerPlane(0, 0, -1, 1);//far
-
-	for (int i = 0; i < MAX_TEX_SLOTS; i++)
-		tex_slots[i] = 0;
 }
 
 BlockRasterizer::~BlockRasterizer() {
 
-}
-
-int BlockRasterizer::GetPointNDCZone(const float4& point) {
-	int flags = 0;
-	if (point.w < 0.0f) flags |= (1 << ZONE_ZERO);
-	if (point.x < -point.w) flags |= (1 << ZONE_LEFT);
-	if (point.x > point.w) flags |= (1 << ZONE_RIGHT);
-	if (point.y < -point.w) flags |= (1 << ZONE_BOTTOM);
-	if (point.y > point.w) flags |= (1 << ZONE_TOP);
-	if (point.z < -point.w) flags |= (1 << ZONE_FAR);
-	if (point.z > point.w) flags |= (1 << ZONE_NEAR);
-	return flags;
 }
 
 bool BlockRasterizer::ClipToFrustumPlane(RasterizerPlane plane, ClipVector& src, ClipVector& dst) {
@@ -188,25 +173,25 @@ void BlockRasterizer::Draw(size_t offset, size_t length) {
 	case PT_TRIANGLE_LIST:
 	{
 		auto faceCount = length / 3;
-		buffer* geom = vbSlots[0].buffer;
+		Buffer* geom = vbSlots[0].buffer;
 
 		if (!faceCount){
 			DebugInfo("No faces to draw");
 			return;
 		}
 		if (!geom){
-			DebugError("Vertex buffer is not set");
+			DebugError("Vertex Buffer is not set");
 			return;
 		}
 
 		auto stride = vbSlots[0].stride;
 
-		//buffer is too small for this draw call
-		if (geom->size() / stride < faceCount * 3) {
-			DebugError("[Draw] Vertex buffer is too small!");
+		//Buffer is too small for this draw call
+		if (geom->Size() / stride < faceCount * 3) {
+			DebugError("[Draw] Vertex Buffer is too small!");
 			return;
 		}
-		uint8_t* data = (uint8_t*)geom->get_pointer();
+		uint8_t* data = (uint8_t*)geom->GetPointer();
 		for (size_t i = 0; i < faceCount; i++) {
 			//setup vertex data pointers
 			uint8_t* v0 = data + ((offset + 0 + i * 3) * stride);
@@ -226,26 +211,26 @@ void BlockRasterizer::DrawIndexed(size_t index_count, size_t start_index_locatio
 	case PT_TRIANGLE_LIST:
 	{
 		int faceCount = index_count / 3;
-		buffer* geom = vbSlots[0].buffer;
-		buffer* indices = ibSlots[0];
+		Buffer* geom = vbSlots[0].buffer;
+		Buffer* indices = ibSlots[0];
 
 		if (!faceCount) {
 			DebugInfo("No faces to draw");
 			return;
 		}
 		if (!geom) {
-			DebugError("Vertex buffer is not set");
+			DebugError("Vertex Buffer is not set");
 			return;
 		}
 		if (!indices) {
-			DebugError("Index buffer is not set");
+			DebugError("Index Buffer is not set");
 			return;
 		}
 		int stride = vbSlots[0].stride;
 
-		uint8_t* vertex_data = (uint8_t*)geom->get_pointer();
-		auto vertices_count = geom->size() / vbSlots[0].stride;
-		indices_t* index_data = (indices_t*)indices->get_pointer();
+		uint8_t* vertex_data = (uint8_t*)geom->GetPointer();
+		auto vertices_count = geom->Size() / vbSlots[0].stride;
+		indices_t* index_data = (indices_t*)indices->GetPointer();
 
 		for (size_t i = 0; i < index_count; i+=3) {
 			//setup vertex data pointers
@@ -309,12 +294,12 @@ void BlockRasterizer::FixupMapping() {
 	}
 }
 
-void BlockRasterizer::SetVertexBuffer(buffer* vb, size_t slot, size_t stride) {
+void BlockRasterizer::SetVertexBuffer(Buffer* vb, size_t slot, size_t stride) {
 	vbSlots[slot].buffer = vb;
 	vbSlots[slot].stride = stride;
 }
 
-void BlockRasterizer::SetIndexBuffer(buffer* ib, size_t slot){
+void BlockRasterizer::SetIndexBuffer(Buffer* ib, size_t slot){
 	ibSlots[slot] = ib;
 }
 
@@ -368,39 +353,6 @@ float4 BlockRasterizer::ConvertColor(uint32_t color) {
 	float b = (float)((color >> 0) & 0xff) * d;
 
 	return float4(r, g, b, a);
-}
-
-void BlockRasterizer::SetTexture(Texture2D* tex, uint8_t slot) {
-	assert(slot >= 0 && slot < MAX_TEX_SLOTS && "Invalid slot ID");
-	tex_slots[slot] = tex;
-}
-
-void BlockRasterizer::DrawTestTriangles()
-{
-	/*RegisterBlock r[3];
-
-	float width = 100.0f;
-	float height = 50.0f;
-
-	float screen_width = 640.0f;
-	float screen_height = 480.0f;
-
-	float min_x = (screen_width - width) / 2.0f;
-	float max_x = (screen_width + width) / 2.0f;
-
-	float min_y = screen_height / 2.0f - height;
-	float max_y = screen_height / 2.0f + height;
-
-	float cx = screen_width / 2.0f;
-
-	float scrW_h = (float)(backBuffer->width / 2);
-	float scrH_h = (float)(backBuffer->height / 2);
-	
-	r[0].reg[0] = float4((min_x - scrW_h)/ screen_width, (0 - scrH_h)/ screen_height, 0.97f, 1.0f);
-	r[1].reg[0] = float4((cx - scrW_h) / screen_width, (max_y - scrH_h) / screen_height, 0.97f, 1.0f);
-	r[2].reg[0] = float4((max_x - scrW_h) / screen_width, (0 - scrH_h) / screen_height, 0.97f, 1.0f);
-
-	DrawTriangle(r[0], r[1], r[2]);*/
 }
 
 void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, RegisterBlock r2_src) {
@@ -526,9 +478,9 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 	minX &= ~(blockSize - 1);
 	minY &= ~(blockSize - 1);
 
-	uint32_t* bbPtr = reinterpret_cast<uint32_t*>(backBuffer->getBuffer()->get_pointer());
+	uint32_t* bbPtr = reinterpret_cast<uint32_t*>(backBuffer->getBuffer()->GetPointer());
 
-	float* dbPtr = reinterpret_cast<float*>(depthBuffer->getBuffer()->get_pointer());
+	float* dbPtr = reinterpret_cast<float*>(depthBuffer->getBuffer()->GetPointer());
 
 	bbPtr += minY * backBuffer->width;
 	dbPtr += minY * depthBuffer->width;

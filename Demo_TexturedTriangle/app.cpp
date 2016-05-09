@@ -1,5 +1,4 @@
 #include "vld.h"
-#include <stdio.h>
 #include "LString.h"
 #include "Buffer.h"
 #include "IRenderWindow.h"
@@ -13,7 +12,7 @@
 #include "StaticBuffer.h"
 #include <array>
 #include "lmath.h"
-#include <iostream>
+#include "FpsCounter.h"
 #include "transform.h"
 #include "gameobject.h"
 #include "Camera.h"
@@ -22,30 +21,20 @@
 #include "stopwatch.h"
 #include "mesh.h"
 #include "cube_generator.h"
+#include <iostream>
 
 #pragma comment(lib, "lframework.lib")
-
-#if defined(_DEBUG)
-#pragma comment(lib, R"(D:\github\softgl\Debug\softgl.lib)")
-#else
-#pragma comment(lib, R"(D:\github\softgl\Release\softgl.lib)")
-#endif
+#pragma comment(lib, "softgl.lib")
 #pragma comment(lib, "vld.lib")
-
-#include <FpsCounter.h>
 
 using namespace LFramework;
 
-
-void DrawMesh(BlockRasterizer* rasterizer, IMesh* mesh)
-{
-	rasterizer->SetVertexBuffer(mesh->GetVertexBuffer(), 0, mesh->GetVertexBuffer()->item_size());
-	for (size_t i = 0; i < mesh->GetSubmeshCount(); ++i)
-	{
+void DrawMesh(BlockRasterizer* rasterizer, IMesh* mesh){
+	rasterizer->SetVertexBuffer(mesh->GetVertexBuffer(), 0, mesh->GetVertexBuffer()->ItemSize());
+	for (size_t i = 0; i < mesh->GetSubmeshCount(); ++i){
 		auto ib = mesh->GetSubmeshBuffer(i);
 		rasterizer->SetIndexBuffer(ib, 0);
-		rasterizer->DrawIndexed(ib->size() / ib->item_size(), 0);
-		//rasterizer->DrawIndexed(6, 12);
+		rasterizer->DrawIndexed(ib->Size() / ib->ItemSize(), 0);
 	}
 }
 
@@ -63,7 +52,7 @@ int main()
 
 	CameraController camController(&camera);
 
-	go.transform.set_localPosition(float3(0, 0, -10.0f));
+	go.transform.SetLocalPosition(float3(0, 0, -10.0f));
 
 	int sx = 640;
 	int sy = 480;
@@ -93,14 +82,8 @@ int main()
 
 	BlockRasterizer rasterizer;
 
-	float4x4 mWorld;
-	float4x4 mProj;
-
-	mWorld = float4x4::identity();
-	mProj = matrix4x4_perspective(3.1415f / 4.0f, (float)sx / (float)sy, 10.0f, 20.0f);
 
 	static_buffer<Vertex, CubeGenerator<Vertex, indices_t>::VertexCount> vertex_buffer;
-
 	static_buffer<indices_t, CubeGenerator<Vertex, indices_t>::IndexCount> index_buffer;
 
 	Mesh<1> mesh;
@@ -108,7 +91,6 @@ int main()
 	mesh.submeshes[0] = &index_buffer;
 
 	CubeGenerator<Vertex, indices_t>::Generate(&mesh);
-
 
 	StaticInputLayout<3> layout;
 	layout.elements = {
@@ -121,62 +103,50 @@ int main()
 	rasterizer.SetPrimitiveType(PT_TRIANGLE_LIST);
 
 
-	Vertex v;
-	auto offset = ((int)&v.UV0) - ((int)&v);
-
 	int frames = 0;
 	float angle = 0.0f;
-
-	rasterizer.SetTexture(tex, 0);
 
 	rasterizer.set_color_buffer(backBuffer);
 	rasterizer.set_depth_buffer(depthBuffer);
 
-	auto vs = new VSDefault();
-	auto ps = new PSDefault();
+	auto vs = VSDefault();
+	auto ps = PSDefault();
 
-	ps->diffuse_map = tex;
+	ps.diffuse_map = tex;
 
-	rasterizer.SetVertexShader(vs);
-	rasterizer.SetPixelShader(ps);
+	rasterizer.SetVertexShader(&vs);
+	rasterizer.SetPixelShader(&ps);
 
 	FpsCounter fps;
 
 	Stopwatch sw;
 
-	while (true)
-	{
-		auto deltaTime = sw.CheckMs().count() / 1000.0f;
+	while (true){
+		float deltaTime = std::chrono::duration_cast<std::chrono::microseconds>(sw.Check()).count() / 1000000.0f;
 		sw.Reset();
-
+		wnd->Update();
 		input->strobe();
-
-		//go.transform.set_local_rotation(Quaternion_f::angle_axis(angle, float3(0, 0, 1)));
-
 		camController.Tick(deltaTime);
 
-		//update world matrix rotation
-		fps.ComputeFPS();
-		std::cout << fps.PreciseFPS() << std::endl;
-		vs->mView = camera.world_to_camera_matrix();
-		vs->mProj = mProj;
-		vs->mWorld = matrix4x4_rotation<float>(angle);
-
+		//clear render targets
 		texture_utils::fill<uint32_t>(backBuffer, 0x00232327);
-		//texture_utils::fill<uint32_t>(backBuffer, 0x00ff0000);
-
 		texture_utils::fill<float>(depthBuffer, 1.0f);
 
-		//DrawMesh(&rasterizer, &quad);
+		//setup material
+		vs.mView = camera.world_to_camera_matrix();
+		vs.mProj = camera.GetProjection();
+		vs.mWorld = matrix4x4_rotation<float>(angle);
+
+		//draw mesh
 		DrawMesh(&rasterizer, &mesh);
 
-		rasterizer.DrawTestTriangles();
-
+		//present
 		wnd->Present(backBuffer);
-		std::cout << angle << std::endl;
+
 		frames++;
 		angle += fps.GetTimeElapsed();
-		wnd->Update();
+		fps.ComputeFPS();
+		std::cout << fps.PreciseFPS() << std::endl;
 	}
 
 	getchar();

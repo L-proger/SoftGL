@@ -12,7 +12,7 @@ struct texture_utils {
 			throw std::exception("Invalid pixel value specified");
 		}
 
-		auto data = (T*)tex->getBuffer()->get_pointer();
+		auto data = (T*)tex->getBuffer()->GetPointer();
 
 		for (size_t i = 0; i < tex->width * tex->height; ++i) {
 			data[i] = pixel_value;

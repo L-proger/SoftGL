@@ -7,10 +7,10 @@
 template<size_t SubmeshCount>
 class Mesh : public IMesh {
 public:
-	buffer* vertexBuffer;
-	std::array<buffer*, SubmeshCount> submeshes;
+	Buffer* vertexBuffer;
+	std::array<Buffer*, SubmeshCount> submeshes;
 
-	virtual buffer* GetVertexBuffer() override {
+	virtual Buffer* GetVertexBuffer() override {
 		return vertexBuffer;
 	}
 
@@ -18,7 +18,7 @@ public:
 		return SubmeshCount;
 	}
 
-	virtual buffer* GetSubmeshBuffer(size_t id) const override {
+	virtual Buffer* GetSubmeshBuffer(size_t id) const override {
 		return submeshes[id];
 	}
 

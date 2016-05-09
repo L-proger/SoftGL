@@ -4,7 +4,7 @@
 #include "Buffer.h"
 
 template<typename T>
-struct dynamic_buffer : public buffer{
+struct dynamic_buffer : public Buffer{
 public:
 	dynamic_buffer() : _size(0), _data(nullptr) {
 
@@ -47,15 +47,15 @@ public:
 		}
 	}
 
-	virtual void* get_pointer() override {
+	virtual void* GetPointer() override {
 		return _data;
 	}
 
-	virtual size_t size() override {
+	virtual size_t Size() override {
 		return _size;
 	}
 
-	virtual size_t item_size() override {
+	virtual size_t ItemSize() override {
 		return sizeof(T);
 	}
 

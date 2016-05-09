@@ -6,8 +6,8 @@
 
 class IMesh {
 public:
-	virtual buffer* GetVertexBuffer() = 0;
+	virtual Buffer* GetVertexBuffer() = 0;
 	virtual size_t GetSubmeshCount() const = 0;
-	virtual buffer* GetSubmeshBuffer(size_t id) const = 0;
+	virtual Buffer* GetSubmeshBuffer(size_t id) const = 0;
 };
 #endif // imesh_h__

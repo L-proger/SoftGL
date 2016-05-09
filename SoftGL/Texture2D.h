@@ -61,7 +61,7 @@ public:
 
 		auto stride = width * bpp;
 		auto padding = stride % 4 == 0 ? 0 : (4 - (stride % 4));
-		uint8_t* ptr = (uint8_t*)data.get_pointer();
+		uint8_t* ptr = (uint8_t*)data.GetPointer();
 
 		//read in the bitmap image data
 		for(size_t y = 0; y < height; ++y){
@@ -78,7 +78,7 @@ public:
 	{
 
 	}
-	buffer* getBuffer()
+	Buffer* getBuffer()
 	{
 		return &data;
 	}

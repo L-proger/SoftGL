@@ -14,7 +14,7 @@ struct CubeGenerator {
 	static constexpr size_t IndexCount = 36;
 
 	static constexpr float4 Corner(size_t id) {
-		return float4(id % 2 == 0 ? -1 : 1, id < 4 ? 1 : -1, (id % 4) < 2 ? 1 : -1, 1.0f);
+		return float4(id % 2 == 0 ? -1.0f : 1.0f, id < 4 ? 1.0f : -1.0f, (id % 4) < 2 ? 1.0f : -1.0f, 1.0f);
 	}
 
 	static bool Generate(IMesh* m) {
@@ -23,12 +23,12 @@ struct CubeGenerator {
 		}
 
 		auto vb = m->GetVertexBuffer();
-		if (vb == nullptr || (vb->size() / vb->item_size()) < VertexCount) {
+		if (vb == nullptr || (vb->Size() / vb->ItemSize()) < VertexCount) {
 			return false;
 		}
 
 		auto ib = m->GetSubmeshBuffer(0);
-		if (ib == nullptr || (ib->size() / ib->item_size()) < IndexCount) {
+		if (ib == nullptr || (ib->Size() / ib->ItemSize()) < IndexCount) {
 			return false;
 		}
 
@@ -70,8 +70,8 @@ struct CubeGenerator {
 			0,1,3,3,1,2
 		};
 
-		auto vertices = (TVertex*)vb->get_pointer();
-		auto indices = (TIndex*)ib->get_pointer();
+		auto vertices = (TVertex*)vb->GetPointer();
+		auto indices = (TIndex*)ib->GetPointer();
 
 		for(size_t i = 0; i < 6; ++i){
 			//update vertices

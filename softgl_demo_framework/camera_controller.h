@@ -18,8 +18,8 @@ public:
 	void Tick(float deltaTime)  {
 		auto mice = Input::Instance()->mice();
 
-		_angle_x += mouse_speed * mice[1]->get_dx();
-		_angle_y += mouse_speed * mice[1]->get_dy();
+		_angle_x += mouse_speed * mice[1]->GetDx();
+		_angle_y += mouse_speed * mice[1]->GetDy();
 
 		_angle_y = clamp(_angle_y, -pi / 2.0f, pi / 2.0f);
 
@@ -31,21 +31,20 @@ public:
 		auto keyboard = Input::Instance()->keyboards()[1];
 		auto& tf = _camera->GameObject()->transform;
 
-
-		if (keyboard->get_key_state(0x57)) {
-			tf.set_localPosition(tf.get_localPosition() + tf.forward() * (deltaTime * move_speed));
+		if (keyboard->GetKeyState(0x57)) {
+			tf.SetLocalPosition(tf.GetLocalPosition() + tf.Forward() * (deltaTime * move_speed));
 		}
 
-		if (keyboard->get_key_state(0x53)) {
-			tf.set_localPosition(tf.get_localPosition() - tf.forward() * (deltaTime * move_speed));
+		if (keyboard->GetKeyState(0x53)) {
+			tf.SetLocalPosition(tf.GetLocalPosition() - tf.Forward() * (deltaTime * move_speed));
 		}
 
-		if (keyboard->get_key_state(0x41)) {
-			tf.set_localPosition(tf.get_localPosition() - tf.right() * (deltaTime * move_speed));
+		if (keyboard->GetKeyState(0x41)) {
+			tf.SetLocalPosition(tf.GetLocalPosition() - tf.right() * (deltaTime * move_speed));
 		}
 
-		if (keyboard->get_key_state(0x44)) {
-			tf.set_localPosition(tf.get_localPosition() + tf.right() * (deltaTime * move_speed));
+		if (keyboard->GetKeyState(0x44)) {
+			tf.SetLocalPosition(tf.GetLocalPosition() + tf.right() * (deltaTime * move_speed));
 		}
 	}
 private:

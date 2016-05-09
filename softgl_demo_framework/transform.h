@@ -23,14 +23,14 @@ public:
 		return L"Transform";
 	}
 
-	void set_localPosition(const float3& position) {
+	void SetLocalPosition(const float3& position) {
 		_position = position;
 	}
-	float3 get_localPosition() {
+	float3 GetLocalPosition() {
 		return _position;
 	}
 
-	float3 forward() const {
+	float3 Forward() const {
 		return get_global_transform().rows[2].xyz;
 	}
 

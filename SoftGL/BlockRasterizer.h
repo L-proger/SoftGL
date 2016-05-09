@@ -15,66 +15,11 @@
 #include "RasterizerSettings.h"
 #include <array>
 #include "Debug.h"
+#include "RegisterBlock.h"
 #include "lmath.h"
 
 using namespace lm;
 
-#define REG_COUNT 5
-
-struct RegisterBlock
-{
-	std::array<float4, REG_COUNT> reg;
-
-    inline static void Sub(const RegisterBlock& b1, const RegisterBlock& b2, RegisterBlock& result)
-	{
-		for(int i = 0; i< REG_COUNT; i++)
-		{
-			result.reg[i] = b1.reg[i] - b2.reg[i];
-		}
-	}
-    inline static void Add(const RegisterBlock& b1, const RegisterBlock& b2, RegisterBlock& result)
-	{
-		for(int i = 0; i< REG_COUNT; i++)
-		{
-			result.reg[i] = b1.reg[i] + b2.reg[i];
-		}
-	}
-    inline static void Mul(const RegisterBlock& b1, float val, RegisterBlock& result)
-	{
-		for(int i = 0; i< REG_COUNT; i++)
-		{
-			result.reg[i] = b1.reg[i] * val;
-		}
-	}
-    inline static void Div(const RegisterBlock& b1, float val, RegisterBlock& result)
-	{
-		for(int i = 0; i< REG_COUNT; i++)
-		{
-			result.reg[i] = b1.reg[i] / val;
-		}
-	}
-    inline static void Mul(RegisterBlock& b1, float val)
-	{
-		for(int i = 0; i< REG_COUNT; i++)
-		{
-			b1.reg[i] *= val;
-		}
-	}
-    inline static void Div(RegisterBlock& b1, float val)
-	{
-		for(int i = 0; i< REG_COUNT; i++)
-		{
-			b1.reg[i] /= val;
-		}
-	}
-    inline static void Clone(const RegisterBlock& from, RegisterBlock& to)
-	{
-		for(int i = 0; i< REG_COUNT; i++)
-		{
-			to.reg[i] = from.reg[i];
-		}
-	}
-};
 enum PRIMITIVE_TYPE
 {
 	PT_TRIANGLE_LIST = 0,
@@ -137,7 +82,6 @@ public:
 
     BlockRasterizer();
     ~BlockRasterizer();
-    int GetPointNDCZone(const float4& point);
 	bool ClipToFrustumPlane(RasterizerPlane plane, ClipVector& src, ClipVector& dst);
     void ClipToFrustum(ClipFace face, ClipVector& dst);
     Texture2D* GetBackBuffer();
@@ -150,22 +94,17 @@ public:
     void Draw(size_t offset, size_t length);
 	void DrawIndexed(size_t index_count, size_t start_index_location);
     void FixupMapping();
-    void SetVertexBuffer(buffer* vb, size_t slot, size_t stride);
-	void SetIndexBuffer(buffer* ib, size_t slot);
+    void SetVertexBuffer(Buffer* vb, size_t slot, size_t stride);
+	void SetIndexBuffer(Buffer* ib, size_t slot);
 
     void SetInputLayout(IInputLayout* layout);
     void SetPixelShader(PixelShader* shader);
     void SetVertexShader(VertexShader* shader);
     void SetBlendState(BlendState* state);
-    void SetTexture(Texture2D* tex, uint8_t slot);
 
     float GetBlendAlpha(BLEND_SOURCE src, const float4& srcColor, const float4& dstColor);
-
-	void DrawTestTriangles();
-
 private:
 	void draw_impl(void* v0, void* v1, void* v2);
-	std::array<Texture2D*, MAX_TEX_SLOTS> tex_slots;
 
     IRenderWindow* render_window;
 	std::array<RasterizerPlane, 7> NDCPlanes;
@@ -191,12 +130,12 @@ private:
 	std::array<int, REG_COUNT> regMapping;
 
 	struct vertex_buffer_slot{
-		buffer* buffer;
+		Buffer* buffer;
 		size_t stride;
 	};
 
 	std::array<vertex_buffer_slot, 8> vbSlots;
-	std::array<buffer*, 8> ibSlots;
+	std::array<Buffer*, 8> ibSlots;
 	VertexShader* vs;
 	PixelShader* ps;
 	int primitiveType;

@@ -61,7 +61,7 @@ public:
 			int w3 = (int)(fx1 * fy  * 256.0f);
 			int w4 = (int)(fx  * fy  * 256.0f);
 
-			auto mem = reinterpret_cast<uint8_t*>(tex->getBuffer()->get_pointer());
+			auto mem = reinterpret_cast<uint8_t*>(tex->getBuffer()->GetPointer());
 
 			uint8_t* p1 = mem + ((py + 0)*tex->width + (px + 0))* tex->bpp;
 			uint8_t* p2 = mem + ((py + 0)*tex->width + (px + 1))* tex->bpp;
@@ -82,7 +82,7 @@ public:
 			ty += 0.5f / th;
 			int x = (int)(tx * tw);
 			int y = (int)(ty * th);
-			uint8_t* ptr = reinterpret_cast<uint8_t*>(tex->getBuffer()->get_pointer());
+			uint8_t* ptr = reinterpret_cast<uint8_t*>(tex->getBuffer()->GetPointer());
 			ptr += (y*tex->width + x)* tex->bpp;
 			color->z = ((float)ptr[0]) / 255.0f;
 			color->y = ((float)ptr[1]) / 255.0f;
