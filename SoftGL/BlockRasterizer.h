@@ -150,6 +150,9 @@ public:
     void SetTexture(Texture2D* tex, uint8_t slot);
 
     float GetBlendAlpha(BLEND_SOURCE src, const float4& srcColor, const float4& dstColor);
+
+	void DrawTestTriangles();
+
 private:
 	void draw_impl(void* v0, void* v1, void* v2);
 	std::array<Texture2D*, MAX_TEX_SLOTS> tex_slots;

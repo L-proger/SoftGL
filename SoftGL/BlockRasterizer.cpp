@@ -234,9 +234,9 @@ void BlockRasterizer::DrawIndexed(size_t index_count, size_t start_index_locatio
 
 		for (size_t i = 0; i < index_count; i+=3) {
 			//setup vertex data pointers
-			auto id0 = index_data[i + 0] + start_index_location;
-			auto id1 = index_data[i + 1] + start_index_location;
-			auto id2 = index_data[i + 2] + start_index_location;
+			auto id0 = index_data[i + 0 + start_index_location];
+			auto id1 = index_data[i + 1 + start_index_location];
+			auto id2 = index_data[i + 2 + start_index_location];
 
 			uint8_t* v0 = vertex_data + id0 * stride;
 			uint8_t* v1 = vertex_data + id1 * stride;
@@ -358,6 +358,34 @@ float4 BlockRasterizer::ConvertColor(uint32_t color) {
 void BlockRasterizer::SetTexture(Texture2D* tex, uint8_t slot) {
 	assert(slot >= 0 && slot < MAX_TEX_SLOTS && "Invalid slot ID");
 	tex_slots[slot] = tex;
+}
+
+void BlockRasterizer::DrawTestTriangles()
+{
+	/*RegisterBlock r[3];
+
+	float width = 100.0f;
+	float height = 50.0f;
+
+	float screen_width = 640.0f;
+	float screen_height = 480.0f;
+
+	float min_x = (screen_width - width) / 2.0f;
+	float max_x = (screen_width + width) / 2.0f;
+
+	float min_y = screen_height / 2.0f - height;
+	float max_y = screen_height / 2.0f + height;
+
+	float cx = screen_width / 2.0f;
+
+	float scrW_h = (float)(backBuffer->width / 2);
+	float scrH_h = (float)(backBuffer->height / 2);
+	
+	r[0].reg[0] = float4((min_x - scrW_h)/ screen_width, (0 - scrH_h)/ screen_height, 0.97f, 1.0f);
+	r[1].reg[0] = float4((cx - scrW_h) / screen_width, (max_y - scrH_h) / screen_height, 0.97f, 1.0f);
+	r[2].reg[0] = float4((max_x - scrW_h) / screen_width, (0 - scrH_h) / screen_height, 0.97f, 1.0f);
+
+	DrawTriangle(r[0], r[1], r[2]);*/
 }
 
 void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, RegisterBlock r2_src) {
@@ -496,9 +524,12 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 
 
 	//top-left fill convention fix
-	if (Dy12 > 0 || (Dy12 == 0 && Dx12 > 0)) C1--;
+	/*if (Dy12 > 0 || (Dy12 == 0 && Dx12 > 0)) C1--;
 	if (Dy23 > 0 || (Dy23 == 0 && Dx23 > 0)) C2--;
-	if (Dy31 > 0 || (Dy31 == 0 && Dx31 > 0)) C3--;
+	if (Dy31 > 0 || (Dy31 == 0 && Dx31 > 0)) C3--;*/
+	if (!(Dy12 < 0 || (Dy12 == 0 && Dx12 > 0))) C1--;
+	if (!(Dy23 < 0 || (Dy23 == 0 && Dx23 > 0))) C2--;
+	if (!(Dy31 < 0 || (Dy31 == 0 && Dx31 > 0))) C3--;
 
 	//scan all blocks
 	for (int y = minY; y < maxY; y += blockSize) {
@@ -526,7 +557,7 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 			bool c01 = C3 + Dx31 * y0 - Dy31 * x1 < 0;
 			bool c10 = C3 + Dx31 * y1 - Dy31 * x0 < 0;
 			bool c11 = C3 + Dx31 * y1 - Dy31 * x1 < 0;
-			int c = (c00 << 0) | (c10 << 1) | (c01 << 2) | (c11 << 3);
+			int c = ((uint32_t)c00 << 0) | ((uint32_t)c10 << 1) | ((uint32_t)c01 << 2) | ((uint32_t)c11 << 3);
 
 			//Skip entire block if all it's 4 corners outside of triangle edges
 			if (a == 0 || b == 0 || c == 0)
@@ -572,8 +603,8 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 
 								pixel_color = pixel_color * srcAlpha + dstColor * dstAlpha;
 							}
-
-							colorBuffer[bx] = ConvertColor(pixel_color);
+							//colorBuffer[bx] += 0x00606060;
+							colorBuffer[bx] =  ConvertColor(pixel_color);
 						}
 					}
 					colorBuffer += backBuffer->width;
@@ -631,7 +662,7 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 
 									rst = rst * srcAlpha + dstColor * dstAlpha;
 								}
-
+								//colorBuffer[bx] += 0x00606060;
 								colorBuffer[bx] = ConvertColor(rst);
 							}
 						}

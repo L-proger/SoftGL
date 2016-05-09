@@ -10,8 +10,7 @@ public:
 	float4x4 mView;
 	float4x4 mProj;
 
-	VSDefault()
-	{
+	VSDefault(){
 		//declare shader inputs
         inputs.push_back(String("POSITION"));
         inputs.push_back(String("TEXCOORD"));

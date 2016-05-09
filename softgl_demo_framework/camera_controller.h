@@ -18,8 +18,8 @@ public:
 	void Tick(float deltaTime)  {
 		auto mice = Input::Instance()->mice();
 
-		_angle_x += mouse_speed * mice[0]->get_dx();
-		_angle_y += mouse_speed * mice[0]->get_dy();
+		_angle_x += mouse_speed * mice[1]->get_dx();
+		_angle_y += mouse_speed * mice[1]->get_dy();
 
 		_angle_y = clamp(_angle_y, -pi / 2.0f, pi / 2.0f);
 

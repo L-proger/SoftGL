@@ -43,6 +43,7 @@ void DrawMesh(BlockRasterizer* rasterizer, IMesh* mesh) {
 		auto ib = mesh->GetSubmeshBuffer(i);
 		rasterizer->SetIndexBuffer(ib, 0);
 		rasterizer->DrawIndexed(ib->size() / ib->item_size(), 0);
+		//rasterizer->DrawIndexed(6, 12);
 	}
 }
 
@@ -59,8 +60,9 @@ int main() {
 
 	CameraController camController(&camera);
 	
-	go.transform.set_localPosition(float3(0.0f, 1.0f, -3.0f));
+	go.transform.set_localPosition(float3(0, 0, -5.2f));
 	//go.transform.set_local_rotation(Quaternion_f::angle_axis(3.1415f / 7.0f, float3(1, 0, 0)));
+//	go.transform.set_local_rotation(Quaternion_f::angle_axis(3.1415f / 4.0f, float3(0, 0, 1)));
 
 
 	int sx = 640;
@@ -74,6 +76,19 @@ int main() {
 	auto backBuffer = new Texture2D(sx, sy, 4);
 	auto depthBuffer = new Texture2D(sx, sy, 4);
 
+	Mesh<1> quad;
+
+	static_buffer<Vertex, 4> quad_vb{{
+		Vertex{ lm::float4(-1, 1,0,1), lm::float2(0,0) },
+		Vertex{ lm::float4( 1, 1,0,1), lm::float2(1,0) },
+		Vertex{ lm::float4( 1,-1,0,1), lm::float2(1,1) },
+		Vertex{ lm::float4(-1,-1,0,1), lm::float2(0,1) }
+	}};
+
+	static_buffer<indices_t, 6> quad_ib{ {0,1,3,3,1,2} };
+
+	quad.vertexBuffer = &quad_vb;
+	quad.submeshes[0] = &quad_ib;
 
 
 	BlockRasterizer rasterizer;
@@ -134,7 +149,9 @@ int main() {
 		sw.Reset();
 
 		input->strobe();
-		
+
+		//go.transform.set_local_rotation(Quaternion_f::angle_axis(angle, float3(0, 0, 1)));
+
 		camController.Tick(deltaTime);
 
 		//update world matrix rotation
@@ -144,15 +161,18 @@ int main() {
 		vs->mProj = mProj;
 		vs->mWorld = matrix4x4_rotation<float>(angle);
 
-		//texture_utils::fill<uint32_t>(backBuffer, 0x00232327);
-		texture_utils::fill<uint32_t>(backBuffer, 0x00ff0000);
+		texture_utils::fill<uint32_t>(backBuffer, 0x00232327);
+		//texture_utils::fill<uint32_t>(backBuffer, 0x00ff0000);
 
 		texture_utils::fill<float>(depthBuffer, 1.0f);
 
+		//DrawMesh(&rasterizer, &quad);
 		DrawMesh(&rasterizer, &mesh);
 
-		wnd->Present(backBuffer);
+		rasterizer.DrawTestTriangles();
 
+		wnd->Present(backBuffer);
+		std::cout << angle << std::endl;
 		frames++;
 		angle += fps.GetTimeElapsed();
 		if (angle > 100000.0f)

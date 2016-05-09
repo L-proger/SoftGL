@@ -13,7 +13,10 @@ public:
 
 	}
 	float4 Execute(float4* input) {
+		//return float4(1, 1, 0, 1);
+		//return float4(input[1].x, input[1].y, 0, 1);
 		
+
 		float3 N = lm::normalize(input[2].xyz);
 		float3 L = lm::normalize(float3(4, 1, 3));
 
