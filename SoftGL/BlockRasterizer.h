@@ -107,7 +107,7 @@ private:
 	void draw_impl(void* v0, void* v1, void* v2);
 
     IRenderWindow* render_window;
-	std::array<RasterizerPlane, 7> NDCPlanes;
+	std::array<RasterizerPlane, 6> NDCPlanes;
 
     uint32_t ConvertColor(const float4& color);
     float4 ConvertColor(uint32_t color);

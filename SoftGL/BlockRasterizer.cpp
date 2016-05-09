@@ -11,13 +11,15 @@ BlockRasterizer::BlockRasterizer()
 	blendState.DstAlpha = BLEND_INV_SRC_ALPHA;
 	blendState.BlendEnable = false;
 
-	NDCPlanes[0] = RasterizerPlane(0, 0, 0, 1);//WTF?
-	NDCPlanes[1] = RasterizerPlane(1, 0, 0, 1);//left
-	NDCPlanes[2] = RasterizerPlane(-1, 0, 0, 1);//right
-	NDCPlanes[3] = RasterizerPlane(0, 1, 0, 1);//top
-	NDCPlanes[4] = RasterizerPlane(0, -1, 0, 1);//bottom
-	NDCPlanes[5] = RasterizerPlane(0, 0, 1, 0);//near plane (D3D NDC, NeraClip Z == 0)
-	NDCPlanes[6] = RasterizerPlane(0, 0, -1, 1);//far
+	
+	NDCPlanes[0] = RasterizerPlane(1, 0, 0, 1);//left
+	NDCPlanes[1] = RasterizerPlane(-1, 0, 0, 1);//right
+	NDCPlanes[2] = RasterizerPlane(0, 1, 0, 1);//top
+	NDCPlanes[3] = RasterizerPlane(0, -1, 0, 1);//bottom
+	NDCPlanes[4] = RasterizerPlane(0, 0, 1, 0);//near plane (D3D NDC, NeraClip Z == 0)
+	NDCPlanes[5] = RasterizerPlane(0, 0, -1, 1);//far
+
+	//NDCPlanes[6] = RasterizerPlane(0, 0, 0, 1);//WTF?
 }
 
 BlockRasterizer::~BlockRasterizer() {
@@ -110,6 +112,7 @@ bool BlockRasterizer::ClipToFrustumPlane(RasterizerPlane plane, ClipVector& src,
 void BlockRasterizer::ClipToFrustum(ClipFace face, ClipVector& dst) {
 	ClipVector cv1, cv2;
 
+
 	dst.clear();
 
 	cv1.push_back(face);
@@ -137,14 +140,14 @@ void BlockRasterizer::ClipToFrustum(ClipFace face, ClipVector& dst) {
 	if (ClipToFrustumPlane(NDCPlanes[4], cv1, cv2)) {
 		std::cout << "Clipped with plane 4" << std::endl;
 	}
-	cv1.clear();
+	//cv1.clear();
 
-	if (ClipToFrustumPlane(NDCPlanes[5], cv2, cv1)) {
+	if (ClipToFrustumPlane(NDCPlanes[5], cv2, dst)) {
 		std::cout << "Clipped with plane 5" << std::endl;
 	}
-	if (ClipToFrustumPlane(NDCPlanes[6], cv1, dst)) {
+	/*if (ClipToFrustumPlane(NDCPlanes[6], cv1, dst)) {
 		std::cout << "Clipped with plane 6" << std::endl;
-	}
+	}*/
 }
 
 Texture2D* BlockRasterizer::GetBackBuffer() {
@@ -265,9 +268,9 @@ void BlockRasterizer::draw_impl(void* v0, void* v1, void* v2)
 	int numInterpolators = vs->Execute(&r2_in[0], &r2_out.reg[0]);
 
 
-	r0_out.reg[0].y = -r0_out.reg[0].y;
+	/*r0_out.reg[0].y = -r0_out.reg[0].y;
 	r1_out.reg[0].y = -r1_out.reg[0].y;
-	r2_out.reg[0].y = -r2_out.reg[0].y;
+	r2_out.reg[0].y = -r2_out.reg[0].y;*/
 
 	ClipVector cv;
 	ClipFace cf;
@@ -279,6 +282,9 @@ void BlockRasterizer::draw_impl(void* v0, void* v1, void* v2)
 
 	for (size_t l = 0; l < cv.size(); l++) {
 		ClipFace cf_render = cv[l];
+		cf_render.v0.reg[0].y = -cf_render.v0.reg[0].y;
+		cf_render.v1.reg[0].y = -cf_render.v1.reg[0].y;
+		cf_render.v2.reg[0].y = -cf_render.v2.reg[0].y;
 		DrawTriangle(cf_render.v0, cf_render.v1, cf_render.v2);
 	}
 }
@@ -545,8 +551,11 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 						pc = 1.0f / (invW.x + invW.y + invW.z);
 
 						//interpolate Z
-						float z_interp = p0->reg[0].z * invW.x + p1->reg[0].z * invW.y + p2->reg[0].z * invW.z;
-						z_interp *= pc;
+
+						float z_interp = p0->reg[0].z * interpolators.x + p1->reg[0].z *interpolators.y + p2->reg[0].z * interpolators.z;
+
+						/*float z_interp = p0->reg[0].z * invW.x + p1->reg[0].z * invW.y + p2->reg[0].z * invW.z;
+						z_interp *= pc;*/
 
 						if(zBuffer[bx] > z_interp)
 						{
@@ -598,8 +607,9 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 							pc = 1.0f / (invW.x + invW.y + invW.z);
 
 							//interpolate Z
-							float z_interp = p0->reg[0].z * invW.x + p1->reg[0].z * invW.y + p2->reg[0].z * invW.z;
-							z_interp *= pc;
+						//	float z_interp = p0->reg[0].z * invW.x + p1->reg[0].z * invW.y + p2->reg[0].z * invW.z;
+							//z_interp *= pc;
+							float z_interp = p0->reg[0].z * interpolators.x + p1->reg[0].z *interpolators.y + p2->reg[0].z * interpolators.z;
 
 
 							if (zBuffer[bx] > z_interp) {

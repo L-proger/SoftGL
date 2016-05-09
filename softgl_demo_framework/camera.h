@@ -25,28 +25,28 @@ public:
 	float GetFov() const{
 		return _fov;
 	}
-	float SetFov(float fov) {
+	void SetFov(float fov) {
 		_fov = fov;
 		UpdateProjection();
 	}
 	float GetAspect() const {
 		return _aspect;
 	}
-	float SetAspect(float aspect) {
+	void SetAspect(float aspect) {
 		_aspect = aspect;
 		UpdateProjection();
 	}
 	float GetZNear() const {
 		return _zNear;
 	}
-	float SetZNear(float zNear) {
+	void SetZNear(float zNear) {
 		_zNear = zNear;
 		UpdateProjection();
 	}
 	float GetZFar() const {
 		return _zFar;
 	}
-	float SetZFar(float zFar) {
+	void SetZFar(float zFar) {
 		_zFar = zFar;
 		UpdateProjection();
 	}

@@ -21,6 +21,7 @@
 #include "stopwatch.h"
 #include "mesh.h"
 #include "cube_generator.h"
+#include "plane_generator.h"
 #include <iostream>
 
 #pragma comment(lib, "lframework.lib")
@@ -38,6 +39,22 @@ void DrawMesh(BlockRasterizer* rasterizer, IMesh* mesh){
 	}
 }
 
+void BlitDepthBuffer(Texture2D* depthBuffer, Texture2D* colorBuffer)
+{
+	auto src_ptr = (float*)depthBuffer->getBuffer()->GetPointer();
+	auto dst_ptr = (uint32_t*)colorBuffer->getBuffer()->GetPointer();
+
+	for(size_t y = 0; y < depthBuffer->height; ++y){
+		for (size_t x = 0; x < depthBuffer->width; ++x) {
+			auto id = y * depthBuffer->width + x;
+			auto src = src_ptr[id];
+			uint32_t value = (uint32_t)(std::pow((src - 0.75f) * 4, 2) * 255.0f);
+			uint32_t color = value | (value << 8) | (value << 16);
+			dst_ptr[id] = color;
+		}
+	}
+}
+
 int main()
 {
 	auto input = Input::Instance();
@@ -49,10 +66,10 @@ int main()
 
 	Game_object go;
 	Camera camera(&go);
-
+	camera.SetZFar(30);
 	CameraController camController(&camera);
 
-	go.transform.SetLocalPosition(float3(0, 0, -10.0f));
+	go.transform.SetLocalPosition(float3(0, 1, -10.0f));
 
 	int sx = 640;
 	int sy = 480;
@@ -65,20 +82,14 @@ int main()
 	auto backBuffer = new Texture2D(sx, sy, 4);
 	auto depthBuffer = new Texture2D(sx, sy, 4);
 
-	Mesh<1> quad;
+	Mesh<1> plane;
+	static_buffer<Vertex, PlaneGenerator<Vertex, indices_t>::VertexCount> quad_vb;
+	static_buffer<indices_t, PlaneGenerator<Vertex, indices_t>::IndexCount> quad_ib;
+	plane.vertexBuffer = &quad_vb;
+	plane.submeshes[0] = &quad_ib;
 
-	static_buffer<Vertex, 4> quad_vb{{
-		Vertex{lm::float4(-1, 1, 0, 1), lm::float2(0, 0)},
-		Vertex{lm::float4(1, 1, 0, 1), lm::float2(1, 0)},
-		Vertex{lm::float4(1, -1, 0, 1), lm::float2(1, 1)},
-		Vertex{lm::float4(-1, -1, 0, 1), lm::float2(0, 1)}
-	}};
 
-	static_buffer<indices_t, 6> quad_ib{{0,1,3,3,1,2}};
-
-	quad.vertexBuffer = &quad_vb;
-	quad.submeshes[0] = &quad_ib;
-
+	PlaneGenerator<Vertex, indices_t>::Generate(&plane);
 
 	BlockRasterizer rasterizer;
 
@@ -139,6 +150,9 @@ int main()
 
 		//draw mesh
 		DrawMesh(&rasterizer, &mesh);
+
+		vs.mWorld = matrix4x4_scale<float>(10,10,10);
+		DrawMesh(&rasterizer, &plane);
 
 		//present
 		wnd->Present(backBuffer);
