@@ -17,7 +17,7 @@ public:
 
 	void Tick(float deltaTime)  {
 		auto mice = Input::Instance()->mice();
-		auto mouse = mice[1];
+		auto mouse = mice[0];
 
 		if(mouse->GetKeyState(1)){
 			_angle_x += mouse_speed * mouse->GetDx();

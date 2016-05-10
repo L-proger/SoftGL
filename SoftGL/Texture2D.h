@@ -5,6 +5,7 @@
 #include "LString.h"
 #include "Bitmap.h"
 #include <stdio.h>
+#include "ITexture2D.h"
 
 struct Color24{
 	uint8_t b;
@@ -12,16 +13,13 @@ struct Color24{
 	uint8_t r;
 };
 
-class Texture2D {
+class DynamicTexture2D : public ITexture2D {
 public:
-	size_t width;
-	size_t height;
-	size_t bpp;
-
-	Texture2D(size_t _width, size_t _height, int _bpp) : width(_width), height(_height), bpp(_bpp), data(_width * _height * _bpp){
+	
+	DynamicTexture2D(size_t _width, size_t _height, int _bpp) : width(_width), height(_height), bpp(_bpp), data(_width * _height * _bpp){
 	}
 
-	Texture2D(String path){
+	DynamicTexture2D(String path){
 		FILE *filePtr; //our file pointer
 		BITMAPFILEHEADER bitmapFileHeader; //our bitmap file header
 		BITMAPINFOHEADER bitmapInfoHeader;
@@ -74,7 +72,7 @@ public:
 
 		fclose(filePtr);
 	}
-	~Texture2D()
+	~DynamicTexture2D()
 	{
 
 	}
@@ -82,7 +80,32 @@ public:
 	{
 		return &data;
 	}
+
+	virtual MipBuffer* GetTopMip() override {
+		throw std::logic_error("The method or operation is not implemented.");
+	}
+
+	virtual size_t GetWidth() override {
+		return width;
+	}
+
+	virtual size_t GetHeight() override {
+		return height;
+	}
+
+	virtual size_t GetBpp() override {
+		return bpp;
+	}
+
+	virtual void UpdateMips() override {
+		
+	}
+
 private:
+	size_t width;
+	size_t height;
+	size_t bpp;
+
 	dynamic_buffer<uint8_t> data;
 };
 #endif // Texture2D_h__

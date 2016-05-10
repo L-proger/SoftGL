@@ -24,6 +24,7 @@
 #include "plane_generator.h"
 #include "PsNormalMap.h"
 #include <iostream>
+#include "mip_buffer.h"
 
 #pragma comment(lib, "lframework.lib")
 #pragma comment(lib, "softgl.lib")
@@ -56,12 +57,55 @@ void BlitDepthBuffer(Texture2D* depthBuffer, Texture2D* colorBuffer)
 	}
 }
 
+
+template<typename _PixelType, size_t _Width, size_t _Height>
+struct MipStaticBuffer : public static_buffer<_PixelType, _Width * _Height>, public MipBuffer {
+public:
+	static constexpr size_t Width = _Width;
+	static constexpr size_t Height = _Height;
+	virtual size_t GetWigth() override { return Width; }
+
+	virtual size_t GetHeight() override { return Height; }
+
+	virtual MipBuffer* GetChild() override { return &childMip; }
+
+	virtual Buffer* GetData() override { return this; }
+
+private:
+	static constexpr uint32_t ChildWidth = Width / 2 > 0 ? Width / 2 : 1;
+	static constexpr uint32_t ChildHeight = Height / 2 > 0 ? Height / 2 : 1;
+	MipStaticBuffer<_PixelType, ChildWidth, ChildHeight> childMip;
+};
+
+
+template<typename _PixelType>
+struct MipStaticBuffer<_PixelType,1,1> : public static_buffer<_PixelType, 1>, public MipBuffer {
+public:
+	size_t GetWigth() override { return 1; }
+
+	size_t GetHeight() override { return 1; }
+
+	MipBuffer* GetChild() override { return nullptr; }
+
+	virtual Buffer* GetData() override { return this; }
+};
+
+MipStaticBuffer<uint8_t, 16, 32> mipData;
+
+static void PrintMips(MipBuffer* mip){
+	if(mip != nullptr){
+		std::cout << "Mip: " << mip->GetWigth() << "x" << mip->GetHeight() << std::endl;
+		PrintMips(mip->GetChild());
+	}
+}
+
 int main()
 {
 	auto input = Input::Instance();
 	auto keyboard = input->keyboards()[1];
 	auto mouse = input->mice()[0];
 
+	PrintMips(&mipData);
 
 	Texture2D* tex_normal = new Texture2D(R"(C:\Users\Sergey\Desktop\normal.bmp)");
 	Texture2D* tex_diffuse = new Texture2D(R"(C:\Users\Sergey\Desktop\diffuse.bmp)");

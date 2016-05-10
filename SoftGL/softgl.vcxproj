@@ -31,7 +31,9 @@
     <ClInclude Include="InputSystem.h" />
     <ClInclude Include="IRenderWindow.h" />
     <ClInclude Include="IShader.h" />
+    <ClInclude Include="ITexture2D.h" />
     <ClInclude Include="LString.h" />
+    <ClInclude Include="mip_buffer.h" />
     <ClInclude Include="PixelShader.h" />
     <ClInclude Include="PSDefault.h" />
     <ClInclude Include="PSFont.h" />
