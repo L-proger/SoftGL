@@ -26,7 +26,7 @@ BlockRasterizer::~BlockRasterizer() {
 
 }
 
-bool BlockRasterizer::ClipToFrustumPlane(RasterizerPlane plane, ClipVector& src, ClipVector& dst) {
+bool BlockRasterizer::ClipToFrustumPlane(RasterizerPlane plane, ClipVector& src, ClipVector& dst, size_t regCount) {
 	auto face_count = src.size();
 	bool clipped = false;
 	for (size_t i = 0; i < face_count; i++) {
@@ -56,7 +56,7 @@ bool BlockRasterizer::ClipToFrustumPlane(RasterizerPlane plane, ClipVector& src,
 			float alpha_a = lm::dot(plane, vert[2]->reg[0]) / (lm::dot(plane, vert[2]->reg[0]) - lm::dot(plane, vert[1]->reg[0]));
 			float alpha_b = lm::dot(plane, vert[2]->reg[0]) / (lm::dot(plane, vert[2]->reg[0]) - lm::dot(plane, vert[0]->reg[0]));
 
-			for (size_t k = 0; k < geomLayout->Size(); k++) {
+			for (size_t k = 0; k < regCount; k++) {
 				vA.reg[k] = vert[2]->reg[k] + (vert[1]->reg[k] - vert[2]->reg[k]) * alpha_a;
 				vB.reg[k] = vert[2]->reg[k] + (vert[0]->reg[k] - vert[2]->reg[k]) * alpha_b;
 			}
@@ -81,7 +81,7 @@ bool BlockRasterizer::ClipToFrustumPlane(RasterizerPlane plane, ClipVector& src,
 			float alpha_a = lm::dot(plane, vert[2]->reg[0]) / (lm::dot(plane, vert[2]->reg[0]) - lm::dot(plane, vert[0]->reg[0]));
 			float alpha_b = lm::dot(plane, vert[1]->reg[0]) / (lm::dot(plane, vert[1]->reg[0]) - lm::dot(plane, vert[0]->reg[0]));
 
-			for (size_t k = 0; k < geomLayout->Size(); k++) {
+			for (size_t k = 0; k < regCount; k++) {
 				vA.reg[k] = vert[2]->reg[k] + (vert[0]->reg[k] - vert[2]->reg[k]) * alpha_a;
 				vB.reg[k] = vert[1]->reg[k] + (vert[0]->reg[k] - vert[1]->reg[k]) * alpha_b;
 			}
@@ -109,7 +109,7 @@ bool BlockRasterizer::ClipToFrustumPlane(RasterizerPlane plane, ClipVector& src,
 	return clipped;
 }
 
-void BlockRasterizer::ClipToFrustum(ClipFace face, ClipVector& dst) {
+void BlockRasterizer::ClipToFrustum(ClipFace face, ClipVector& dst, size_t regCount) {
 	ClipVector cv1, cv2;
 
 
@@ -117,32 +117,32 @@ void BlockRasterizer::ClipToFrustum(ClipFace face, ClipVector& dst) {
 
 	cv1.push_back(face);
 
-	if(ClipToFrustumPlane(NDCPlanes[0], cv1, cv2)){
+	if(ClipToFrustumPlane(NDCPlanes[0], cv1, cv2, regCount)){
 		std::cout << "Clipped with plane 0" << std::endl;
 	}
 	cv1.clear();
 
-	if (ClipToFrustumPlane(NDCPlanes[1], cv2, cv1)) {
+	if (ClipToFrustumPlane(NDCPlanes[1], cv2, cv1, regCount)) {
 		std::cout << "Clipped with plane 1" << std::endl;
 	}
 	cv2.clear();
 
-	if (ClipToFrustumPlane(NDCPlanes[2], cv1, cv2)) {
+	if (ClipToFrustumPlane(NDCPlanes[2], cv1, cv2, regCount)) {
 		std::cout << "Clipped with plane 2" << std::endl;
 	}
 	cv1.clear();
 
-	if (ClipToFrustumPlane(NDCPlanes[3], cv2, cv1)) {
+	if (ClipToFrustumPlane(NDCPlanes[3], cv2, cv1, regCount)) {
 		std::cout << "Clipped with plane 3" << std::endl;
 	}
 	cv2.clear();
 
-	if (ClipToFrustumPlane(NDCPlanes[4], cv1, cv2)) {
+	if (ClipToFrustumPlane(NDCPlanes[4], cv1, cv2, regCount)) {
 		std::cout << "Clipped with plane 4" << std::endl;
 	}
 	//cv1.clear();
 
-	if (ClipToFrustumPlane(NDCPlanes[5], cv2, dst)) {
+	if (ClipToFrustumPlane(NDCPlanes[5], cv2, dst, regCount)) {
 		std::cout << "Clipped with plane 5" << std::endl;
 	}
 	/*if (ClipToFrustumPlane(NDCPlanes[6], cv1, dst)) {
@@ -268,9 +268,9 @@ void BlockRasterizer::draw_impl(void* v0, void* v1, void* v2)
 	int numInterpolators = vs->Execute(&r2_in[0], &r2_out.reg[0]);
 
 
-	/*r0_out.reg[0].y = -r0_out.reg[0].y;
+	r0_out.reg[0].y = -r0_out.reg[0].y;
 	r1_out.reg[0].y = -r1_out.reg[0].y;
-	r2_out.reg[0].y = -r2_out.reg[0].y;*/
+	r2_out.reg[0].y = -r2_out.reg[0].y;
 
 	ClipVector cv;
 	ClipFace cf;
@@ -278,13 +278,10 @@ void BlockRasterizer::draw_impl(void* v0, void* v1, void* v2)
 	cf.v1 = r1_out;
 	cf.v2 = r2_out;
 
-	ClipToFrustum(cf, cv);
+	ClipToFrustum(cf, cv, numInterpolators);
 
 	for (size_t l = 0; l < cv.size(); l++) {
 		ClipFace cf_render = cv[l];
-		cf_render.v0.reg[0].y = -cf_render.v0.reg[0].y;
-		cf_render.v1.reg[0].y = -cf_render.v1.reg[0].y;
-		cf_render.v2.reg[0].y = -cf_render.v2.reg[0].y;
 		DrawTriangle(cf_render.v0, cf_render.v1, cf_render.v2);
 	}
 }
@@ -551,19 +548,22 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 						pc = 1.0f / (invW.x + invW.y + invW.z);
 
 						//interpolate Z
-
 						float z_interp = p0->reg[0].z * interpolators.x + p1->reg[0].z *interpolators.y + p2->reg[0].z * interpolators.z;
-
-						/*float z_interp = p0->reg[0].z * invW.x + p1->reg[0].z * invW.y + p2->reg[0].z * invW.z;
-						z_interp *= pc;*/
 
 						if(zBuffer[bx] > z_interp)
 						{
 							zBuffer[bx] = z_interp;
 							//interpolate registers
 							for (int r = 1; r < REG_COUNT; r++) {
-								r_ps.reg[r] = p0->reg[r] * invW.x + p1->reg[r] * invW.y + p2->reg[r] * invW.z;
-								r_ps.reg[r] *= pc; //add perspective correction
+								if(r == 5)
+								{
+									r_ps.reg[r] = p0->reg[r] * interpolators.x + p1->reg[r] * interpolators.y + p2->reg[r] * interpolators.z;
+								}else
+								{
+									r_ps.reg[r] = p0->reg[r] * invW.x + p1->reg[r] * invW.y + p2->reg[r] * invW.z;
+									r_ps.reg[r] *= pc; //add perspective correction
+								}
+								
 							}
 
 							float4 pixel_color = ps->Execute(&r_ps.reg[0]);
@@ -606,11 +606,7 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 							//compute 1/w value for perspective correction
 							pc = 1.0f / (invW.x + invW.y + invW.z);
 
-							//interpolate Z
-						//	float z_interp = p0->reg[0].z * invW.x + p1->reg[0].z * invW.y + p2->reg[0].z * invW.z;
-							//z_interp *= pc;
 							float z_interp = p0->reg[0].z * interpolators.x + p1->reg[0].z *interpolators.y + p2->reg[0].z * interpolators.z;
-
 
 							if (zBuffer[bx] > z_interp) {
 								zBuffer[bx] = z_interp;

@@ -82,8 +82,8 @@ public:
 
     BlockRasterizer();
     ~BlockRasterizer();
-	bool ClipToFrustumPlane(RasterizerPlane plane, ClipVector& src, ClipVector& dst);
-    void ClipToFrustum(ClipFace face, ClipVector& dst);
+	bool ClipToFrustumPlane(RasterizerPlane plane, ClipVector& src, ClipVector& dst, size_t regCount);
+    void ClipToFrustum(ClipFace face, ClipVector& dst, size_t regCount);
     Texture2D* GetBackBuffer();
     Texture2D* GetDepthBuffer();
 

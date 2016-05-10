@@ -1,30 +1,43 @@
-#ifndef PSDefault_h__
-#define PSDefault_h__
+#ifndef PsNormalMap_h__
+#define PsNormalMap_h__
 
 #include "PixelShader.h"
 #include "lighting_core.h"
 
-class PSDefault : public PixelShader
-{
+class PsNormalMap : public PixelShader {
 public:
 	float3 camPosition;
 	float4 diffuse;
 	Texture2D* diffuse_map;
+	Texture2D* normal_map;
+	Texture2D* ao_map;
 	float ior = 1.5f;
 	float M = 0.7f;
 
-	PSDefault():diffuse_map(nullptr), diffuse(0){
+	PsNormalMap() :diffuse_map(nullptr), normal_map(nullptr), diffuse(0) {
 
 	}
 	float4 Execute(float4* input) {
 		//return float4(1, 1, 0, 1);
 		//return float4(input[1].x, input[1].y, 0, 1);
-	
-		float3 lightColor = float3(1, 1, 0.9f);
-	
-		float3 ambientColor = float3(0.1f, 0.1f, 0.2f);
 
-		float3 N = lm::normalize(input[2].xyz);
+		float3 lightColor = float3(1, 1, 0.9f);
+
+		float3 ambientColor = float3(0.1f, 0.1f, 0.25f);
+		
+		float4 normal_tbn = float4(0, 0, 0, 0);
+		tex2D(normal_map, &normal_tbn, input[1].x, input[1].y, TextureFilter::Bilinear);
+		auto tmp = normal_tbn.y;
+		normal_tbn.y = normal_tbn.z;
+		normal_tbn.z = tmp;
+
+		float4 ao;
+		tex2D(ao_map, &ao, input[1].x, input[1].y, TextureFilter::Bilinear);
+
+		//return float4(normal_tbn.x, normal_tbn.y, normal_tbn.z, 1);
+
+		float3 N = lm::normalize(normal_tbn.xyz * 2.0f - 1.0f); //lm::normalize(input[2].xyz);
+	
 		float3 L = lm::normalize(float3(1, 1, 1));
 		float3 V = lm::normalize(camPosition - input[3].xyz);
 		float3 H = normalize(L + V);
@@ -50,7 +63,7 @@ public:
 
 
 		float3 result = float3(0, 0, 0);
-		result = diffuse.xyz * (lightColor * diffuse.xyz) * NdotL + lightColor * r_microfacet + ambientColor * diffuse.xyz;
+		result = diffuse.xyz * (lightColor * diffuse.xyz) * NdotL + lightColor * r_microfacet + ambientColor * diffuse.xyz * ao.x;
 
 		result = lm::saturate(result);
 
@@ -60,4 +73,4 @@ public:
 		return retval;
 	}
 };
-#endif // PSDefault_h__
+#endif // PsNormalMap_h__

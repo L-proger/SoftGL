@@ -22,6 +22,7 @@
 #include "mesh.h"
 #include "cube_generator.h"
 #include "plane_generator.h"
+#include "PsNormalMap.h"
 #include <iostream>
 
 #pragma comment(lib, "lframework.lib")
@@ -61,8 +62,10 @@ int main()
 	auto keyboard = input->keyboards()[1];
 	auto mouse = input->mice()[0];
 
-	std::string tex_path = R"(C:\Users\Sergey\Desktop\tile2.bmp)";
-	Texture2D* tex = new Texture2D(tex_path.c_str());
+
+	Texture2D* tex_normal = new Texture2D(R"(C:\Users\Sergey\Desktop\normal.bmp)");
+	Texture2D* tex_diffuse = new Texture2D(R"(C:\Users\Sergey\Desktop\diffuse.bmp)");
+	Texture2D* tex_ao = new Texture2D(R"(C:\Users\Sergey\Desktop\ao.bmp)");
 
 	Game_object go;
 	Camera camera(&go);
@@ -123,13 +126,17 @@ int main()
 	auto vs = VSDefault();
 	auto ps = PSDefault();
 
-	ps.diffuse_map = tex;
+	auto psNormal = PsNormalMap();
+
+	ps.diffuse_map = tex_diffuse;
+	psNormal.diffuse_map = tex_diffuse;
+	psNormal.normal_map = tex_normal;
+	psNormal.ao_map = tex_ao;
 
 	rasterizer.SetVertexShader(&vs);
 	rasterizer.SetPixelShader(&ps);
 
 	FpsCounter fps;
-
 	Stopwatch sw;
 
 	while (true){
@@ -144,13 +151,18 @@ int main()
 		texture_utils::fill<float>(depthBuffer, 1.0f);
 
 		//setup material
+
+		ps.camPosition = camera.GameObject()->transform.get_global_position();
+
 		vs.mView = camera.world_to_camera_matrix();
 		vs.mProj = camera.GetProjection();
 		vs.mWorld = matrix4x4_rotation<float>(angle);
-
+		rasterizer.SetPixelShader(&ps);
 		//draw mesh
 		DrawMesh(&rasterizer, &mesh);
 
+		psNormal.camPosition = ps.camPosition;
+		rasterizer.SetPixelShader(&psNormal);
 		vs.mWorld = matrix4x4_scale<float>(10,10,10);
 		DrawMesh(&rasterizer, &plane);
 

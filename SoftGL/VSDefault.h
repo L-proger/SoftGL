@@ -26,11 +26,11 @@ public:
 
 		float3x3 world = (float3x3)mWorld;
 
-		position = lm::mul(wvp, position);
-		output[0] = position;
+		output[0] = lm::mul(wvp, position);
 		output[1] = *input[1];
 		output[2].xyz = lm::mul(world, (*input[2]).xyz);
-		return 3;
+		output[3].xyz = lm::mul(mWorld, position).xyz;
+		return 4;
 	}
 };
 #endif // VSDefault_h__
