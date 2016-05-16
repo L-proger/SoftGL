@@ -8,9 +8,9 @@ class PsNormalMap : public PixelShader {
 public:
 	float3 camPosition;
 	float4 diffuse;
-	Texture2D* diffuse_map;
-	Texture2D* normal_map;
-	Texture2D* ao_map;
+	Texture* diffuse_map;
+	Texture* normal_map;
+	Texture* ao_map;
 	float ior = 1.5f;
 	float M = 0.7f;
 
@@ -25,14 +25,12 @@ public:
 
 		float3 ambientColor = float3(0.1f, 0.1f, 0.25f);
 		
-		float4 normal_tbn = float4(0, 0, 0, 0);
-		tex2D(normal_map, &normal_tbn, input[1].x, input[1].y, TextureFilter::Bilinear);
+		float4 normal_tbn = tex2D(normal_map, input[1].x, input[1].y, TextureFilter::Bilinear);
 		auto tmp = normal_tbn.y;
 		normal_tbn.y = normal_tbn.z;
 		normal_tbn.z = tmp;
 
-		float4 ao;
-		tex2D(ao_map, &ao, input[1].x, input[1].y, TextureFilter::Bilinear);
+		float4 ao = tex2D(ao_map, input[1].x, input[1].y, TextureFilter::Bilinear);
 
 		//return float4(normal_tbn.x, normal_tbn.y, normal_tbn.z, 1);
 
@@ -54,13 +52,7 @@ public:
 
 		float r_microfacet = (F * G * D) / (4 * NdotL * NdotV + 1.0e-7) * MATH_PI* NdotL;
 
-		float4 diffuse = float4(0, 0, 0, 0);
-		if (diffuse_map != nullptr) {
-			tex2D(diffuse_map, &diffuse, input[1].x, input[1].y, TextureFilter::Bilinear);
-		};
-
-
-
+		float4 diffuse = tex2D(diffuse_map, input[1].x, input[1].y, TextureFilter::Bilinear);
 
 		float3 result = float3(0, 0, 0);
 		result = diffuse.xyz * (lightColor * diffuse.xyz) * NdotL + lightColor * r_microfacet + ambientColor * diffuse.xyz * ao.x;

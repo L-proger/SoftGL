@@ -9,7 +9,7 @@ class PSDefault : public PixelShader
 public:
 	float3 camPosition;
 	float4 diffuse;
-	Texture2D* diffuse_map;
+	Texture* diffuse_map;
 	float ior = 1.5f;
 	float M = 0.7f;
 
@@ -43,7 +43,7 @@ public:
 
 		float4 diffuse = float4(0, 0, 0, 0);
 		if (diffuse_map != nullptr) {
-			tex2D(diffuse_map, &diffuse, input[1].x, input[1].y, TextureFilter::Bilinear);
+			diffuse = tex2D(diffuse_map, input[1].x, input[1].y, TextureFilter::Bilinear);
 		};
 
 

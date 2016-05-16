@@ -5,7 +5,7 @@
 #include "LString.h"
 #include "DisplayMode.h"
 #include <cstdint>
-#include "Texture2D.h"
+#include "Texture.h"
 
 
 class IRenderWindow{
@@ -31,7 +31,7 @@ public:
 	{
 		return fsMode;
 	}
-    virtual void Present(Texture2D* tex) = 0;
+    virtual void Present(Texture* tex) = 0;
 
 	virtual void OnActivate() = 0;
 	virtual void OnDeactivate() = 0;

@@ -2,7 +2,7 @@
 #include "LString.h"
 #include "Buffer.h"
 #include "IRenderWindow.h"
-#include "Texture2D.h"
+#include "Texture.h"
 #include "BlockRasterizer.h"
 #include "RenderWindow.h"
 #include "Vertex.h"
@@ -24,7 +24,9 @@
 #include "plane_generator.h"
 #include "PsNormalMap.h"
 #include <iostream>
-#include "mip_buffer.h"
+#include "StaticTexture.h"
+#include <cstdint>
+#include "shaders/textured_no_lit.h"
 
 #pragma comment(lib, "lframework.lib")
 #pragma comment(lib, "softgl.lib")
@@ -41,63 +43,11 @@ void DrawMesh(BlockRasterizer* rasterizer, IMesh* mesh){
 	}
 }
 
-void BlitDepthBuffer(Texture2D* depthBuffer, Texture2D* colorBuffer)
-{
-	auto src_ptr = (float*)depthBuffer->getBuffer()->GetPointer();
-	auto dst_ptr = (uint32_t*)colorBuffer->getBuffer()->GetPointer();
+static constexpr size_t sx = 640;
+static constexpr size_t sy = 480;
 
-	for(size_t y = 0; y < depthBuffer->height; ++y){
-		for (size_t x = 0; x < depthBuffer->width; ++x) {
-			auto id = y * depthBuffer->width + x;
-			auto src = src_ptr[id];
-			uint32_t value = (uint32_t)(std::pow((src - 0.75f) * 4, 2) * 255.0f);
-			uint32_t color = value | (value << 8) | (value << 16);
-			dst_ptr[id] = color;
-		}
-	}
-}
-
-
-template<typename _PixelType, size_t _Width, size_t _Height>
-struct MipStaticBuffer : public static_buffer<_PixelType, _Width * _Height>, public MipBuffer {
-public:
-	static constexpr size_t Width = _Width;
-	static constexpr size_t Height = _Height;
-	virtual size_t GetWigth() override { return Width; }
-
-	virtual size_t GetHeight() override { return Height; }
-
-	virtual MipBuffer* GetChild() override { return &childMip; }
-
-	virtual Buffer* GetData() override { return this; }
-
-private:
-	static constexpr uint32_t ChildWidth = Width / 2 > 0 ? Width / 2 : 1;
-	static constexpr uint32_t ChildHeight = Height / 2 > 0 ? Height / 2 : 1;
-	MipStaticBuffer<_PixelType, ChildWidth, ChildHeight> childMip;
-};
-
-
-template<typename _PixelType>
-struct MipStaticBuffer<_PixelType,1,1> : public static_buffer<_PixelType, 1>, public MipBuffer {
-public:
-	size_t GetWigth() override { return 1; }
-
-	size_t GetHeight() override { return 1; }
-
-	MipBuffer* GetChild() override { return nullptr; }
-
-	virtual Buffer* GetData() override { return this; }
-};
-
-MipStaticBuffer<uint8_t, 16, 32> mipData;
-
-static void PrintMips(MipBuffer* mip){
-	if(mip != nullptr){
-		std::cout << "Mip: " << mip->GetWigth() << "x" << mip->GetHeight() << std::endl;
-		PrintMips(mip->GetChild());
-	}
-}
+MipChain<sizeof(uint32_t), sx, sy, 0> bb_data;
+MipChain<sizeof(float), sx, sy, 0> db_data;
 
 int main()
 {
@@ -105,11 +55,9 @@ int main()
 	auto keyboard = input->keyboards()[1];
 	auto mouse = input->mice()[0];
 
-	PrintMips(&mipData);
-
-	Texture2D* tex_normal = new Texture2D(R"(C:\Users\Sergey\Desktop\normal.bmp)");
-	Texture2D* tex_diffuse = new Texture2D(R"(C:\Users\Sergey\Desktop\diffuse.bmp)");
-	Texture2D* tex_ao = new Texture2D(R"(C:\Users\Sergey\Desktop\ao.bmp)");
+	auto tex_normal = texture_utils::LoadTexture(R"(C:\Users\Sergey\Desktop\normal.bmp)");
+	auto tex_diffuse = texture_utils::LoadTexture(R"(C:\Users\Sergey\Desktop\diffuse.bmp)");
+	auto tex_ao = texture_utils::LoadTexture(R"(C:\Users\Sergey\Desktop\ao.bmp)");
 
 	Game_object go;
 	Camera camera(&go);
@@ -118,16 +66,20 @@ int main()
 
 	go.transform.SetLocalPosition(float3(0, 1, -10.0f));
 
-	int sx = 640;
-	int sy = 480;
 
 	RenderWindow* wnd = new RenderWindow();
 	wnd->SetSize(sx, sy);
 	wnd->SetCaption("SoftGL");
 	wnd->CenterWindow();
 
-	auto backBuffer = new Texture2D(sx, sy, 4);
-	auto depthBuffer = new Texture2D(sx, sy, 4);
+	TextureDescription desc;
+	desc.Width = sx;
+	desc.Height = sy;
+	desc.BytesPerPixel = sizeof(uint32_t);
+	desc.MipCount = bb_data.MipsCount;
+
+	StaticTexture<decltype(&bb_data)> backBuffer(&bb_data, desc);
+	StaticTexture<decltype(&db_data)> depthBuffer(&db_data, desc);
 
 	Mesh<1> plane;
 	static_buffer<Vertex, PlaneGenerator<Vertex, indices_t>::VertexCount> quad_vb;
@@ -140,16 +92,6 @@ int main()
 
 	BlockRasterizer rasterizer;
 
-
-	static_buffer<Vertex, CubeGenerator<Vertex, indices_t>::VertexCount> vertex_buffer;
-	static_buffer<indices_t, CubeGenerator<Vertex, indices_t>::IndexCount> index_buffer;
-
-	Mesh<1> mesh;
-	mesh.vertexBuffer = &vertex_buffer;
-	mesh.submeshes[0] = &index_buffer;
-
-	CubeGenerator<Vertex, indices_t>::Generate(&mesh);
-
 	StaticInputLayout<3> layout;
 	layout.elements = {
 		InputElement("POSITION", 0, RegType::float4, 0),
@@ -160,22 +102,16 @@ int main()
 	rasterizer.SetInputLayout(&layout);
 	rasterizer.SetPrimitiveType(PT_TRIANGLE_LIST);
 
-
 	int frames = 0;
 	float angle = 0.0f;
 
-	rasterizer.set_color_buffer(backBuffer);
-	rasterizer.set_depth_buffer(depthBuffer);
+	rasterizer.set_color_buffer(&backBuffer);
+	rasterizer.set_depth_buffer(&depthBuffer);
 
 	auto vs = VSDefault();
-	auto ps = PSDefault();
+	auto ps = PSTexturedNoLit();
+	ps.diffuseMap = tex_diffuse;
 
-	auto psNormal = PsNormalMap();
-
-	ps.diffuse_map = tex_diffuse;
-	psNormal.diffuse_map = tex_diffuse;
-	psNormal.normal_map = tex_normal;
-	psNormal.ao_map = tex_ao;
 
 	rasterizer.SetVertexShader(&vs);
 	rasterizer.SetPixelShader(&ps);
@@ -191,27 +127,18 @@ int main()
 		camController.Tick(deltaTime);
 
 		//clear render targets
-		texture_utils::fill<uint32_t>(backBuffer, 0x00232327);
-		texture_utils::fill<float>(depthBuffer, 1.0f);
+		texture_utils::fill<uint32_t>(&backBuffer, 0x00232327);
+		texture_utils::fill<float>(&depthBuffer, 1.0f);
 
 		//setup material
-
-		ps.camPosition = camera.GameObject()->transform.get_global_position();
-
+		vs.mWorld = lm::mul(matrix4x4_scale<float>(10, 10, 10), matrix4x4_rotation(Quaternion_f::angle_axis(-3.1415f/2*0, float3(1,0,0))));
 		vs.mView = camera.world_to_camera_matrix();
 		vs.mProj = camera.GetProjection();
-		vs.mWorld = matrix4x4_rotation<float>(angle);
-		rasterizer.SetPixelShader(&ps);
-		//draw mesh
-		DrawMesh(&rasterizer, &mesh);
-
-		psNormal.camPosition = ps.camPosition;
-		rasterizer.SetPixelShader(&psNormal);
-		vs.mWorld = matrix4x4_scale<float>(10,10,10);
+		
 		DrawMesh(&rasterizer, &plane);
 
 		//present
-		wnd->Present(backBuffer);
+		wnd->Present(&backBuffer);
 
 		frames++;
 		angle += fps.GetTimeElapsed();

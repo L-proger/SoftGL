@@ -1,7 +1,7 @@
 #ifndef BlockRasterizer_h__
 #define BlockRasterizer_h__
 
-#include "Texture2D.h"
+#include "Texture.h"
 #include "Viewport.h"
 #include "InputLayout.h"
 #include "VertexShader.h"
@@ -84,11 +84,11 @@ public:
     ~BlockRasterizer();
 	bool ClipToFrustumPlane(RasterizerPlane plane, ClipVector& src, ClipVector& dst, size_t regCount);
     void ClipToFrustum(ClipFace face, ClipVector& dst, size_t regCount);
-    Texture2D* GetBackBuffer();
-    Texture2D* GetDepthBuffer();
+	Texture* GetBackBuffer();
+	Texture* GetDepthBuffer();
 
-	void set_color_buffer(Texture2D* buffer);
-	void set_depth_buffer(Texture2D* buffer);
+	void set_color_buffer(Texture* buffer);
+	void set_depth_buffer(Texture* buffer);
 
     void SetPrimitiveType(int type);
     void Draw(size_t offset, size_t length);
@@ -140,7 +140,7 @@ private:
 	PixelShader* ps;
 	int primitiveType;
 
-	Texture2D* backBuffer;
-	Texture2D* depthBuffer;
+	Texture* backBuffer;
+	Texture* depthBuffer;
 };
 #endif // BlockRasterizer_h__

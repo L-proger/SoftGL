@@ -63,23 +63,25 @@ public:
 	virtual void event_switch_fullscreen() {
 
 	}
-	virtual void Present(Texture2D* tex) override {
-		if (tex->bpp == 4) {
+	virtual void Present(Texture* tex) override {
+		if (tex->Desc().BytesPerPixel == 4) {
 
 			SetDIBitsToDevice(
 				context,
 				0,
 				0,
-				tex->width,
-				tex->height,
+				tex->Desc().Width,
+				tex->Desc().Height,
 				0,
 				0,
 				0,
-				tex->height,
-				tex->getBuffer()->GetPointer(),
+				tex->Desc().Height,
+				tex->LockWrite(),
 				&info,
 				0
 			);
+		}else{
+			DebugError("Can't present not 4 bytes pixels");
 		}
 	}
 protected:

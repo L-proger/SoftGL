@@ -22,6 +22,7 @@
     <ClInclude Include="Bitmap.h" />
     <ClInclude Include="BlockRasterizer.h" />
     <ClInclude Include="Buffer.h" />
+    <ClInclude Include="config.h" />
     <ClInclude Include="Debug.h" />
     <ClInclude Include="DisplayMode.h" />
     <ClInclude Include="dynamic_buffer.h" />
@@ -31,9 +32,10 @@
     <ClInclude Include="InputSystem.h" />
     <ClInclude Include="IRenderWindow.h" />
     <ClInclude Include="IShader.h" />
-    <ClInclude Include="ITexture2D.h" />
     <ClInclude Include="LString.h" />
-    <ClInclude Include="mip_buffer.h" />
+    <ClInclude Include="mip_utils.h" />
+    <ClInclude Include="StaticTexture.h" />
+    <ClInclude Include="static_mip_chain.h" />
     <ClInclude Include="PixelShader.h" />
     <ClInclude Include="PSDefault.h" />
     <ClInclude Include="PSFont.h" />
@@ -46,7 +48,7 @@
     <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="StaticBuffer.h" />
     <ClInclude Include="static_vector.h" />
-    <ClInclude Include="Texture2D.h" />
+    <ClInclude Include="Texture.h" />
     <ClInclude Include="TextureSampler.h" />
     <ClInclude Include="texture_utils.h" />
     <ClInclude Include="Tools.h" />

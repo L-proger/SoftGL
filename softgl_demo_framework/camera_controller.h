@@ -28,7 +28,7 @@ public:
 			_camera->GameObject()->transform.set_local_rotation(lm::mul(rh, rv));
 		}
 	
-		auto keyboard = Input::Instance()->keyboards()[1];
+		auto keyboard = Input::Instance()->keyboards()[2];
 		auto& tf = _camera->GameObject()->transform;
 
 		if (keyboard->GetKeyState(0x57)) {

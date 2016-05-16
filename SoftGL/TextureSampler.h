@@ -1,9 +1,9 @@
 #ifndef TEXTURESAMPLER_H
 #define TEXTURESAMPLER_H
 
-#include "Texture2D.h"
+#include "Texture.h"
 
-static inline uint32_t sample2D(Texture2D* tex, float tX, float tY)
+static inline uint32_t sample2D(Texture* tex, float tX, float tY)
 {
 	if(tex == nullptr)
 	{
@@ -14,18 +14,20 @@ static inline uint32_t sample2D(Texture2D* tex, float tX, float tY)
 
     tY = 1.0f - tY;
 
-    int x = static_cast<int>((tX * ((float)tex->width - 1.0f)));
-    int y = static_cast<int>((tY * ((float)tex->height - 1.0f)));
-    uint8_t* ptr = reinterpret_cast<uint8_t*>(tex->getBuffer()->GetPointer());
 
 
-    float pX = tX * (float)tex->width;
-    float pY = tY * (float)tex->height;
+    int x = static_cast<int>((tX * ((float)tex->Desc().Width - 1.0f)));
+    int y = static_cast<int>((tY * ((float)tex->Desc().Height - 1.0f)));
+    auto ptr = reinterpret_cast<const uint8_t*>(tex->LockRead());
+
+
+    float pX = tX * (float)tex->Desc().Width;
+    float pY = tY * (float)tex->Desc().Height;
 
     uint32_t frX = (uint32_t)((pX - (float)((int)pX))* 255.0f);
     uint32_t frY = (uint32_t)((pY - (float)((int)pY))* 255.0f);
 
-    uint32_t* ptr2 = reinterpret_cast<uint32_t*>(tex->getBuffer()->GetPointer());
+    auto ptr2 = reinterpret_cast<const uint32_t*>(tex->LockRead());
 
     uint32_t color;
   //  if(tex->bpp < 4)
@@ -35,7 +37,7 @@ static inline uint32_t sample2D(Texture2D* tex, float tX, float tY)
         uint32_t rl = 0xff000000;
         uint32_t rr = 0xff000000;*/
 
-        memcpy(&tl, ptr+ (y*tex->width + x)* tex->bpp, tex->bpp);
+        memcpy(&tl, ptr+ (y*tex->Desc().Width + x)* tex->Desc().BytesPerPixel, tex->Desc().BytesPerPixel);
         //memcpy(&tr, ptr+ (y*tex->width + x + 1)* tex->bpp, 3);
     //	memcpy(&rl, ptr+ ((y + 1)*tex->width + x)* tex->bpp, 3);
         //memcpy(&rr, ptr+ ((y + 1)*tex->width + x + 1)* tex->bpp, 3);

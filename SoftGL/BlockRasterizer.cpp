@@ -150,19 +150,19 @@ void BlockRasterizer::ClipToFrustum(ClipFace face, ClipVector& dst, size_t regCo
 	}*/
 }
 
-Texture2D* BlockRasterizer::GetBackBuffer() {
+Texture* BlockRasterizer::GetBackBuffer() {
 	return backBuffer;
 }
 
-Texture2D* BlockRasterizer::GetDepthBuffer() {
+Texture* BlockRasterizer::GetDepthBuffer() {
 	return depthBuffer;
 }
 
-void BlockRasterizer::set_color_buffer(Texture2D* buffer) {
+void BlockRasterizer::set_color_buffer(Texture* buffer) {
 	backBuffer = buffer;
 }
 
-void BlockRasterizer::set_depth_buffer(Texture2D* buffer) {
+void BlockRasterizer::set_depth_buffer(Texture* buffer) {
 	depthBuffer = buffer;
 }
 
@@ -358,12 +358,27 @@ float4 BlockRasterizer::ConvertColor(uint32_t color) {
 	return float4(r, g, b, a);
 }
 
-void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, RegisterBlock r2_src) {
-	float sw_h = (float)backBuffer->width / 2.0f;
-	float sh_h = (float)backBuffer->height / 2.0f;
+template<size_t _BlockSize, typename _Var>
+inline void CalcDerivatives(
+	int dy10, int dy20,
+	int dx10, int dx20,
+	_Var z0, _Var z1, _Var z2, _Var& ddx, _Var& ddy) {
 
-	float scrW_h = (float)(backBuffer->width / 2);
-	float scrH_h = (float)(backBuffer->height / 2);
+	const auto dc10 = z1 - z0;
+	const auto dc20 = z2 - z0;
+
+	//(iy1 - iy0)
+	auto A = dc20 * dy10 - dc10 * dy20;
+	auto B = dc10 * dx20 - dc20 * dx10;
+	int C = dy20 * dx10 - dx20 * dy10;
+
+	ddx = A / (float)-C;
+	ddy = B / (float)-C;
+}
+
+void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, RegisterBlock r2_src) {
+	float scrW_h = (float)(backBuffer->Desc().Width / 2);
+	float scrH_h = (float)(backBuffer->Desc().Height / 2);
 
 	RegisterBlock* p0 = &r0_src;
 	RegisterBlock* p1 = &r1_src;
@@ -397,83 +412,72 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 			p2 = pTmp;
 		}
 
-	//interpolation weights per vertex
-	float3 col1(1.0f, 0.0f, 0.0f);
-	float3 col2(0.0f, 1.0f, 0.0f);
-	float3 col3(0.0f, 0.0f, 1.0f);
 
-	//weights deltas
-	float3 dc31 = col3 - col1;
-	float3 dc21 = col2 - col1;
+	const int x0 = (int)std::round(16.0f * p0->reg[0].x);
+	const int x1 = (int)std::round(16.0f * p1->reg[0].x);
+	const int x2 = (int)std::round(16.0f * p2->reg[0].x);
+	const int y0 = (int)std::round(16.0f * p0->reg[0].y);
+	const int y1 = (int)std::round(16.0f * p1->reg[0].y);
+	const int y2 = (int)std::round(16.0f * p2->reg[0].y);
 
-	//temporary register for perspective correction value
-	float pc;
-
-
-	const int x1 = (int)std::round(16.0f * p0->reg[0].x);
-	const int x2 = (int)std::round(16.0f * p1->reg[0].x);
-	const int x3 = (int)std::round(16.0f * p2->reg[0].x);
-	const int y1 = (int)std::round(16.0f * p0->reg[0].y);
-	const int y2 = (int)std::round(16.0f * p1->reg[0].y);
-	const int y3 = (int)std::round(16.0f * p2->reg[0].y);
-
+	const int Dx01 = x0 - x1;
 	const int Dx12 = x1 - x2;
-	const int Dx23 = x2 - x3;
-	const int Dx31 = x3 - x1;
+	const int Dx20 = x2 - x0;
 
+	const int Dy01 = y0 - y1;
 	const int Dy12 = y1 - y2;
-	const int Dy23 = y2 - y3;
-	const int Dy31 = y3 - y1;
+	const int Dy20 = y2 - y0;
 
+	const int FDx01 = Dx01 << 4;
 	const int FDx12 = Dx12 << 4;
-	const int FDx23 = Dx23 << 4;
-	const int FDx31 = Dx31 << 4;
+	const int FDx20 = Dx20 << 4;
 
+	const int FDy01 = Dy01 << 4;
 	const int FDy12 = Dy12 << 4;
-	const int FDy23 = Dy23 << 4;
-	const int FDy31 = Dy31 << 4;
+	const int FDy20 = Dy20 << 4;
 
 	//bounding rectangle
-	int minX = ((std::min)((std::min)(x1, x2), x3) + 0xF) >> 4;
-	int maxX = ((std::max)((std::max)(x1, x2), x3) + 0xF) >> 4;
-	int minY = ((std::min)((std::min)(y1, y2), y3) + 0xF) >> 4;
-	int maxY = ((std::max)((std::max)(y1, y2), y3) + 0xF) >> 4;
+	int minX = ((std::min)((std::min)(x0, x1), x2) + 0xF) >> 4;
+	int maxX = ((std::max)((std::max)(x0, x1), x2) + 0xF) >> 4;
+	int minY = ((std::min)((std::min)(y0, y1), y2) + 0xF) >> 4;
+	int maxY = ((std::max)((std::max)(y0, y1), y2) + 0xF) >> 4;
 
+	const int ix0 = (x0 + 0xf) >> 4;
 	const int ix1 = (x1 + 0xf) >> 4;
 	const int ix2 = (x2 + 0xf) >> 4;
-	const int ix3 = (x3 + 0xf) >> 4;
 
+	const int iy0 = (y0 + 0xf) >> 4;
 	const int iy1 = (y1 + 0xf) >> 4;
 	const int iy2 = (y2 + 0xf) >> 4;
-	const int iy3 = (y3 + 0xf) >> 4;
 
-	float3 A = dc31 * ((iy2 - iy1)) - dc21 * ((iy3 - iy1));
-	float3 B = dc21 * ((ix3 - ix1)) - dc31 * ((ix2 - ix1));
-	int C = ((iy3 - iy1)) * ((ix2 - ix1)) - ((ix3 - ix1)) * ((iy2 - iy1));
+	const int diy20 = iy2 - iy0;
+	const int dix20 = ix2 - ix0;
+	const int diy10 = iy1 - iy0;
+	const int dix10 = ix1 - ix0;
 
-	if (C == 0) return;
+	const int area = dix10 * diy20 - dix20 * diy10;
 
-	float3 dzdx = A / (float)-C;
-	float3 dzdy = B / (float)-C;
+	if (area == 0) return;
+
 
 	if (maxY < 0)
 		return;
-	if (minY >= (int)backBuffer->height)
+	if (minY >= (int)backBuffer->Desc().Height)
 		return;
 	if (maxX < 0)
 		return;
-	if (minX >= (int)backBuffer->width)
+	if (minX >= (int)backBuffer->Desc().Width)
 		return;
 
 	if (minY < 0)
 		minY = 0;
-	if (maxY >= (int)backBuffer->height)
-		maxY = (int)backBuffer->height - 1;
+	if (maxY >= (int)backBuffer->Desc().Height)
+		maxY = (int)backBuffer->Desc().Height - 1;
 
 	if (minX < 0)
 		minX = 0;
-	if (maxX >= (int)backBuffer->width)
-		maxX = (int)backBuffer->width - 1;
+	if (maxX >= (int)backBuffer->Desc().Width)
+		maxX = (int)backBuffer->Desc().Width - 1;
 
 
 	int blockSize = 8;
@@ -481,25 +485,49 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 	minX &= ~(blockSize - 1);
 	minY &= ~(blockSize - 1);
 
-	uint32_t* bbPtr = reinterpret_cast<uint32_t*>(backBuffer->getBuffer()->GetPointer());
+	auto bbPtr = reinterpret_cast<uint32_t*>(backBuffer->LockWrite());
 
-	float* dbPtr = reinterpret_cast<float*>(depthBuffer->getBuffer()->GetPointer());
+	auto dbPtr = reinterpret_cast<float*>(depthBuffer->LockWrite());
 
-	bbPtr += minY * backBuffer->width;
-	dbPtr += minY * depthBuffer->width;
+	bbPtr += minY * backBuffer->Desc().Width;
+	dbPtr += minY * depthBuffer->Desc().Width;
 
-	int C1 = Dy12*x1 - Dx12*y1;
-	int C2 = Dy23*x2 - Dx23*y2;
-	int C3 = Dy31*x3 - Dx31*y3;
+	int C1 = Dy01*x0 - Dx01*y0;
+	int C2 = Dy12*x1 - Dx12*y1;
+	int C3 = Dy20*x2 - Dx20*y2;
 
 
 	//top-left fill convention fix
-	/*if (Dy12 > 0 || (Dy12 == 0 && Dx12 > 0)) C1--;
-	if (Dy23 > 0 || (Dy23 == 0 && Dx23 > 0)) C2--;
-	if (Dy31 > 0 || (Dy31 == 0 && Dx31 > 0)) C3--;*/
-	if (!(Dy12 < 0 || (Dy12 == 0 && Dx12 > 0))) C1--;
-	if (!(Dy23 < 0 || (Dy23 == 0 && Dx23 > 0))) C2--;
-	if (!(Dy31 < 0 || (Dy31 == 0 && Dx31 > 0))) C3--;
+	if (!(Dy01 < 0 || (Dy01 == 0 && Dx01 > 0))) C1--;
+	if (!(Dy12 < 0 || (Dy12 == 0 && Dx12 > 0))) C2--;
+	if (!(Dy20 < 0 || (Dy20 == 0 && Dx20 > 0))) C3--;
+
+	RegisterBlock triDerivX;
+	RegisterBlock triDerivY;
+	
+	RegisterBlock invRegs[3];
+	for (int i = 1; i < REG_COUNT; i++) {
+		invRegs[0].reg[i] = p0->reg[i] * iw0;
+		invRegs[1].reg[i] = p1->reg[i] * iw1;
+		invRegs[2].reg[i] = p2->reg[i] * iw2;
+	}
+
+	for (int i = 1; i < REG_COUNT; i++) {
+		CalcDerivatives<8, float4>(diy10, diy20, dix10, dix20, invRegs[0].reg[i], invRegs[1].reg[i], invRegs[2].reg[i], triDerivX.reg[i], triDerivY.reg[i]);
+	}
+	float2 derivZW_X;
+	float2 derivZW_Y;
+
+	float2 p0zw = p0->reg[0].zw;
+	p0zw.y = 1.0f / p0zw.y;
+
+	float2 p1zw = p1->reg[0].zw;
+	p1zw.y = 1.0f / p1zw.y;
+
+	float2 p2zw = p2->reg[0].zw;
+	p2zw.y = 1.0f / p2zw.y;
+
+	CalcDerivatives<8, float2>(diy10, diy20, dix10, dix20, p0zw, p1zw, p2zw, derivZW_X, derivZW_Y);
 
 	//scan all blocks
 	for (int y = minY; y < maxY; y += blockSize) {
@@ -511,60 +539,62 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 			int y1 = (y + blockSize - 1) << 4;
 
 			//evaluate half space functions for each corner
-			bool a00 = C1 + Dx12 * y0 - Dy12 * x0 < 0;
-			bool a01 = C1 + Dx12 * y0 - Dy12 * x1 < 0;
-			bool a10 = C1 + Dx12 * y1 - Dy12 * x0 < 0;
-			bool a11 = C1 + Dx12 * y1 - Dy12 * x1 < 0;
+			bool a00 = C1 + Dx01 * y0 - Dy01 * x0 < 0;
+			bool a01 = C1 + Dx01 * y0 - Dy01 * x1 < 0;
+			bool a10 = C1 + Dx01 * y1 - Dy01 * x0 < 0;
+			bool a11 = C1 + Dx01 * y1 - Dy01 * x1 < 0;
 			int a = (a00 << 0) | (a10 << 1) | (a01 << 2) | (a11 << 3);
 
-			bool b00 = C2 + Dx23 * y0 - Dy23 * x0 < 0;
-			bool b01 = C2 + Dx23 * y0 - Dy23 * x1 < 0;
-			bool b10 = C2 + Dx23 * y1 - Dy23 * x0 < 0;
-			bool b11 = C2 + Dx23 * y1 - Dy23 * x1 < 0;
+			bool b00 = C2 + Dx12 * y0 - Dy12 * x0 < 0;
+			bool b01 = C2 + Dx12 * y0 - Dy12 * x1 < 0;
+			bool b10 = C2 + Dx12 * y1 - Dy12 * x0 < 0;
+			bool b11 = C2 + Dx12 * y1 - Dy12 * x1 < 0;
 			int b = (b00 << 0) | (b10 << 1) | (b01 << 2) | (b11 << 3);
 
-			bool c00 = C3 + Dx31 * y0 - Dy31 * x0 < 0;
-			bool c01 = C3 + Dx31 * y0 - Dy31 * x1 < 0;
-			bool c10 = C3 + Dx31 * y1 - Dy31 * x0 < 0;
-			bool c11 = C3 + Dx31 * y1 - Dy31 * x1 < 0;
+			bool c00 = C3 + Dx20 * y0 - Dy20 * x0 < 0;
+			bool c01 = C3 + Dx20 * y0 - Dy20 * x1 < 0;
+			bool c10 = C3 + Dx20 * y1 - Dy20 * x0 < 0;
+			bool c11 = C3 + Dx20 * y1 - Dy20 * x1 < 0;
 			int c = ((uint32_t)c00 << 0) | ((uint32_t)c10 << 1) | ((uint32_t)c01 << 2) | ((uint32_t)c11 << 3);
 
 			//Skip entire block if all it's 4 corners outside of triangle edges
 			if (a == 0 || b == 0 || c == 0)
 				continue;
 
-			uint32_t* colorBuffer = bbPtr;
-			float* zBuffer = dbPtr;
+			auto colorBuffer = bbPtr;
+			auto zBuffer = dbPtr;
+
+			RegisterBlock var00;
+			//interpolate registers
+			for (int r = 1; r < REG_COUNT; r++) {
+				var00.reg[r] = invRegs[0].reg[r] + triDerivX.reg[r] * (x - ix0) + triDerivY.reg[r] * (y - iy0);
+			}
 
 			//Whole block is inside triangle!
 			if (a == 0xf && b == 0xf && c == 0xf) {
 				for (int by = 0; by < blockSize; by++) {
 					for (int bx = x; bx < (x + blockSize); bx++) {
 						//compute interpolation weights
-						float3 interpolators = col1 + dzdx * (bx - ix1) + dzdy*(y + by - iy1);
-						float3 invW(1.0f / p0->reg[0].w * interpolators.x, 1.0f / p1->reg[0].w * interpolators.y, 1.0f / p2->reg[0].w * interpolators.z);
 
-						//compute 1/w value for perspective correction
-						pc = 1.0f / (invW.x + invW.y + invW.z);
+						auto ddx0 = (bx - ix0);
+						auto ddy0 = (y + by - iy0);
+						float2 zw = p0zw + derivZW_X * ddx0 + derivZW_Y * ddy0;
 
 						//interpolate Z
-						float z_interp = p0->reg[0].z * interpolators.x + p1->reg[0].z *interpolators.y + p2->reg[0].z * interpolators.z;
+						float z_interp = zw.x;
 
 						if(zBuffer[bx] > z_interp)
 						{
 							zBuffer[bx] = z_interp;
 							//interpolate registers
+
 							for (int r = 1; r < REG_COUNT; r++) {
-								if(r == 5)
-								{
-									r_ps.reg[r] = p0->reg[r] * interpolators.x + p1->reg[r] * interpolators.y + p2->reg[r] * interpolators.z;
-								}else
-								{
-									r_ps.reg[r] = p0->reg[r] * invW.x + p1->reg[r] * invW.y + p2->reg[r] * invW.z;
-									r_ps.reg[r] *= pc; //add perspective correction
-								}
-								
+								r_ps.reg[r] = (var00.reg[r] + triDerivX.reg[r] * (bx - x)) / zw.y;
 							}
+
+							/*for (int r = 1; r < REG_COUNT; r++) {
+								r_ps.reg[r] = invRegs[0].reg[r] + triDerivX.reg[r] * ddx0 + triDerivY.reg[r] * ddy0;
+							}*/
 
 							float4 pixel_color = ps->Execute(&r_ps.reg[0]);
 
@@ -583,14 +613,19 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 							colorBuffer[bx] =  ConvertColor(pixel_color);
 						}
 					}
-					colorBuffer += backBuffer->width;
-					zBuffer += depthBuffer->width;
+					colorBuffer += backBuffer->Desc().Width;
+					zBuffer += depthBuffer->Desc().Width;
+
+					//increment Y variables
+					for (int r = 1; r < REG_COUNT; r++) {
+						var00.reg[r] = var00.reg[r] + triDerivY.reg[r];
+					}
 				}
 			} else //Partially covered block
 			{
-				int CY1 = C1 + Dx12 * y0 - Dy12 * x0;
-				int CY2 = C2 + Dx23 * y0 - Dy23 * x0;
-				int CY3 = C3 + Dx31 * y0 - Dy31 * x0;
+				int CY1 = C1 + Dx01 * y0 - Dy01 * x0;
+				int CY2 = C2 + Dx12 * y0 - Dy12 * x0;
+				int CY3 = C3 + Dx20 * y0 - Dy20 * x0;
 
 				for (int by = y; by < (y + blockSize); by++) {
 					int CX1 = CY1;
@@ -599,21 +634,18 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 
 					for (int bx = x; bx < (x + blockSize); bx++) {
 						if (CX1 < 0 && CX2 < 0 && CX3 < 0) {
-							float3 interpolators = col1 + dzdx*(bx - ix1) + dzdy*(by - iy1);
+							auto ddx0 = bx - ix0;
+							auto ddy0 = (by - iy0);
+							float2 zw = p0zw + derivZW_X * ddx0 + derivZW_Y * ddy0;
 
-							float3 invW(1.0f / p0->reg[0].w * interpolators.x, 1.0f / p1->reg[0].w * interpolators.y, 1.0f / p2->reg[0].w * interpolators.z);
-
-							//compute 1/w value for perspective correction
-							pc = 1.0f / (invW.x + invW.y + invW.z);
-
-							float z_interp = p0->reg[0].z * interpolators.x + p1->reg[0].z *interpolators.y + p2->reg[0].z * interpolators.z;
+							float z_interp = zw.x;
 
 							if (zBuffer[bx] > z_interp) {
 								zBuffer[bx] = z_interp;
 								//interpolate registers
 								for (int r = 1; r < REG_COUNT; r++) {
-									r_ps.reg[r] = p0->reg[r] * invW.x + p1->reg[r] * invW.y + p2->reg[r] * invW.z;
-									r_ps.reg[r] *= pc; //add perspective correction
+									r_ps.reg[r] = invRegs[0].reg[r] + triDerivX.reg[r] * ddx0 + triDerivY.reg[r] * ddy0;
+									r_ps.reg[r] /= zw.y;//add perspective correction
 								}
 
 								float4 rst;
@@ -640,20 +672,20 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 							}
 						}
 
-						CX1 -= FDy12;
-						CX2 -= FDy23;
-						CX3 -= FDy31;
+						CX1 -= FDy01;
+						CX2 -= FDy12;
+						CX3 -= FDy20;
 					}
-					CY1 += FDx12;
-					CY2 += FDx23;
-					CY3 += FDx31;
+					CY1 += FDx01;
+					CY2 += FDx12;
+					CY3 += FDx20;
 
-					colorBuffer += backBuffer->width;
-					zBuffer += depthBuffer->width;
+					colorBuffer += backBuffer->Desc().Width;
+					zBuffer += depthBuffer->Desc().Width;
 				}
 			}
 		}
-		bbPtr += backBuffer->width * blockSize;
-		dbPtr += depthBuffer->width * blockSize;
+		bbPtr += backBuffer->Desc().Width * blockSize;
+		dbPtr += depthBuffer->Desc().Width * blockSize;
 	}
 }
