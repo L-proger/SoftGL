@@ -3,62 +3,66 @@
 
 #include "stopwatch.h"
 
-#define MAX_AVG_STEPS 20
-
+template<size_t AveragingFramesCount = 20>
 class FpsCounter
 {
 public:
-	FpsCounter()
-		:position(MAX_AVG_STEPS)
-	{
+	typedef LFramework::Stopwatch::clock_t::duration duration_t;
 
+	FpsCounter():position(0),avgFps(0) {
+		_lastClock = _sw.Check();
+		timeElapsed = timeElapsed.zero();
+		for (size_t i = 0; i < AveragingFramesCount; ++i) {
+			_buffer[i] = duration_t::zero();
+		}
 	}
 	~FpsCounter()
 	{
 
 	}
-	void ComputeFPS()
-	{
-		auto ms = _sw.CheckMs();
-		_sw.Reset();
+	void ComputeFPS(){
+		auto nowTime = _sw.Check();
+		timeElapsed = nowTime - _lastClock;
+		_lastClock = nowTime;
 
-		timeElapsed = ms.count() / 1000.0f;
-		fps = 1.0f / timeElapsed;
-		
+		_buffer[position] = timeElapsed;
+		position = (position + 1) % AveragingFramesCount;
 
-		position++;
-		
-		if(position >= MAX_AVG_STEPS)
-			position = 0;
-
-		buffer[position] = fps;
-
-		avgFps = 0.0f;
-		for(int i = 0; i < MAX_AVG_STEPS; i++)
-		{
-			avgFps+=buffer[i];
+		duration_t sum = duration_t::zero();
+		for (size_t i = 0; i < AveragingFramesCount; ++i) {
+			sum += _buffer[i];
 		}
-		avgFps /= (float)MAX_AVG_STEPS; 
 
+		auto us = std::chrono::duration_cast<std::chrono::microseconds>(sum).count() / AveragingFramesCount;
+		if (us == 0) {
+			avgFps = 0.0f;
+		} else {
+			avgFps =1.0f / ( (float)us / 1000000.0f);
+		}
 	}
-	float PreciseFPS()
-	{
-		return fps;
+	float PreciseFPS() {
+		float time = GetFrameTimeSeconds();
+		if (time <= 0.0f) {
+			return 0.0f;
+		}
+		return 1.0f / time;
 	}
 	float AverageFPS()
 	{
 		return avgFps;
 	}
-	float GetTimeElapsed()
-	{
+	float GetFrameTimeSeconds() const {
+		return (float)std::chrono::duration_cast<std::chrono::microseconds>(timeElapsed).count() / 1000000.0f;
+	}
+	duration_t GetTimeElapsed() const {
 		return timeElapsed;
 	}
 private:
 	LFramework::Stopwatch _sw;
-	float fps;
-	float timeElapsed;
+	duration_t _lastClock;
+	duration_t timeElapsed;
 	float avgFps;
-	float buffer[MAX_AVG_STEPS];
+	duration_t _buffer[AveragingFramesCount];
 	int position;
 };
 #endif // FpsCounter_h__

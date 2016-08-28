@@ -1,6 +1,6 @@
 #include "RenderWindow.h"
 
-#ifdef WIN32
+#ifdef _WIN32
 #define L_WIN32
 #include <winuser.h>
 

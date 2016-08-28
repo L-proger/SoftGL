@@ -2,6 +2,7 @@
 #define lighting_core_h__
 
 #include "lmath.h"
+#include <algorithm>
 
 #ifndef MATH_PI
 #define MATH_PI 3.1415926535
@@ -21,7 +22,7 @@ float FresnelSchlickConductor(float ior, float absorbtion, float3 l, float3 h) {
 }
 
 float G_implicit(float3 n, float3 h, float3 v, float3 l) {
-	return max(0, dot(n, l)) * max(0, dot(n, v));
+	return (std::max<float>)(0, dot(n, l)) * (std::max<float>)(0, dot(n, v));
 }
 
 float G_Cook_Torrance(float3 n, float3 h, float3 v, float3 l) {

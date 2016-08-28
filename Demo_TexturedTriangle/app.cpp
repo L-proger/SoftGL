@@ -1,3 +1,4 @@
+#define WIN32_LEAN_AND_MEAN
 #include "vld.h"
 #include "LString.h"
 #include "Buffer.h"
@@ -27,10 +28,11 @@
 #include "StaticTexture.h"
 #include <cstdint>
 #include "shaders/textured_no_lit.h"
+#include <windows.h>
+#include <WinBase.h>
 
 #pragma comment(lib, "lframework.lib")
 #pragma comment(lib, "softgl.lib")
-#pragma comment(lib, "vld.lib")
 
 using namespace LFramework;
 
@@ -43,11 +45,16 @@ void DrawMesh(BlockRasterizer* rasterizer, IMesh* mesh){
 	}
 }
 
-static constexpr size_t sx = 640;
-static constexpr size_t sy = 480;
+static constexpr size_t sx = 1600;
+static constexpr size_t sy = 900;
 
-MipChain<sizeof(uint32_t), sx, sy, 0> bb_data;
-MipChain<sizeof(float), sx, sy, 0> db_data;
+alignas(32) MipChain<sizeof(uint32_t), sx, sy, 0> bb_data;
+alignas(32) MipChain<sizeof(float), sx, sy, 0> db_data;
+
+/*bool isAvxSupportedByWindows() {
+	const DWORD64 avxFeatureMask = XSTATE_MASK_LEGACY_SSE | XSTATE_MASK_GSSE;
+	return GetEnabledExtendedFeatures(avxFeatureMask) == avxFeatureMask;
+}*/
 
 int main()
 {
@@ -55,9 +62,9 @@ int main()
 	auto keyboard = input->keyboards()[1];
 	auto mouse = input->mice()[0];
 
-	auto tex_normal = texture_utils::LoadTexture(R"(C:\Users\Sergey\Desktop\normal.bmp)");
-	auto tex_diffuse = texture_utils::LoadTexture(R"(C:\Users\Sergey\Desktop\diffuse.bmp)");
-	auto tex_ao = texture_utils::LoadTexture(R"(C:\Users\Sergey\Desktop\ao.bmp)");
+	//auto tex_normal = texture_utils::LoadTexture(R"(D:\L\development\Resources\Floors\normal.bmp)");
+	//auto tex_diffuse = texture_utils::LoadTexture(R"(D:\L\development\Resources\Floors\diffuse.bmp)");
+	//auto tex_ao = texture_utils::LoadTexture(R"(D:\L\development\Resources\Floors\ao.bmp)");
 
 	Game_object go;
 	Camera camera(&go);
@@ -102,48 +109,53 @@ int main()
 	rasterizer.SetInputLayout(&layout);
 	rasterizer.SetPrimitiveType(PT_TRIANGLE_LIST);
 
-	int frames = 0;
-	float angle = 0.0f;
+
 
 	rasterizer.set_color_buffer(&backBuffer);
 	rasterizer.set_depth_buffer(&depthBuffer);
 
 	auto vs = VSDefault();
 	auto ps = PSTexturedNoLit();
-	ps.diffuseMap = tex_diffuse;
+	//ps.diffuseMap = tex_diffuse;
 
 
 	rasterizer.SetVertexShader(&vs);
 	rasterizer.SetPixelShader(&ps);
-
-	FpsCounter fps;
+	
+	FpsCounter<40> fps;
 	Stopwatch sw;
-
+	float threadTime = 0;
+	int frames = 0;
+	float angle = 0.0f;
 	while (true){
-		float deltaTime = std::chrono::duration_cast<std::chrono::microseconds>(sw.Check()).count() / 1000000.0f;
-		sw.Reset();
+		frames++;
+		fps.ComputeFPS();
+		threadTime += fps.GetFrameTimeSeconds();
+		if (threadTime >= 1.0f) {
+			std::cout << "FPS: " << (int)(frames / threadTime) << std::endl;
+			threadTime = 0;
+			frames = 0;
+		}
 		wnd->Update();
 		input->strobe();
-		camController.Tick(deltaTime);
+		camController.Tick(fps.GetFrameTimeSeconds());
 
 		//clear render targets
-		texture_utils::fill<uint32_t>(&backBuffer, 0x00232327);
-		texture_utils::fill<float>(&depthBuffer, 1.0f);
+		texture_utils::fill<uint32_t>(&backBuffer, 0x00ff0000 );//0x00232327
+		//texture_utils::fill<float>(&depthBuffer, 1.0f);
 
 		//setup material
 		vs.mWorld = lm::mul(matrix4x4_scale<float>(10, 10, 10), matrix4x4_rotation(Quaternion_f::angle_axis(-3.1415f/2*0, float3(1,0,0))));
 		vs.mView = camera.world_to_camera_matrix();
 		vs.mProj = camera.GetProjection();
 		
-		DrawMesh(&rasterizer, &plane);
+		//DrawMesh(&rasterizer, &plane);
 
 		//present
 		wnd->Present(&backBuffer);
 
-		frames++;
-		angle += fps.GetTimeElapsed();
-		fps.ComputeFPS();
-		std::cout << fps.PreciseFPS() << std::endl;
+		
+		angle += fps.GetFrameTimeSeconds();
 	}
 
 	getchar();

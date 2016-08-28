@@ -5,6 +5,7 @@
 
 #include "StaticTexture.h"
 #include "Bitmap.h"
+#include <intrin.h>
 
 struct texture_utils {
 	template<typename T>
@@ -19,9 +20,50 @@ struct texture_utils {
 
 		auto data = (T*)tex->LockWrite();
 
-		for (size_t i = 0; i < tex->Desc().Width * tex->Desc().Height; ++i) {
-			data[i] = pixel_value;
+		auto memsize = tex->Desc().Width * tex->Desc().Height * sizeof(pixel_value);
+
+		if((8 % (sizeof(T))) == 0 && (memsize % 8) == 0)
+		{
+			alignas(8) uint64_t block_value;
+			T* blockPtr = (T*)&block_value;
+			for (size_t i = 0; i < (8 / sizeof(T)); ++i) {
+				blockPtr[i] = pixel_value;
+			}
+
+			auto blockMem = (uint64_t*)data;
+			for(size_t i = 0; i < (memsize / sizeof(block_value)); ++i)
+			{
+				blockMem[i] = block_value;
+			}
 		}
+
+		/*__m256i avxBlock;
+
+		if ((sizeof(avxBlock) % (sizeof(T))) == 0 && (memsize % sizeof(avxBlock)) == 0) {
+			T* blockPtr = (T*)&avxBlock;
+			for (size_t i = 0; i < (sizeof(avxBlock) / sizeof(T)); ++i) {
+				blockPtr[i] = pixel_value;
+			}
+
+			auto blockMem = (decltype(avxBlock)*)data;
+			if(((size_t)blockMem % sizeof(avxBlock)) != 0)
+			{
+				throw std::exception("Memory is not SSE aligned");
+			}
+			const auto cnt = (memsize / sizeof(avxBlock));
+			const auto last = blockMem + cnt;
+			while(blockMem != last){
+		
+				_mm256_store_si256(blockMem++, avxBlock);
+				//_mm_store_si128(blockMem++, avxBlock);
+			}
+		}*/
+		 
+
+		//generic assign
+		/*for (size_t i = 0; i < tex->Desc().Width * tex->Desc().Height; ++i) {
+			data[i] = pixel_value;
+		}*/
 	}
 
 	static Texture* LoadTexture(const std::string& path) {
