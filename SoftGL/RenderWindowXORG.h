@@ -1,6 +1,8 @@
 #ifndef RENDERWINDOWXORG_H
 #define RENDERWINDOWXORG_H
 
+#if defined(LINUX)
+
 #include "IRenderWindow.h"
 #include<X11/Xlib.h>
 #include<X11/Xutil.h>
@@ -46,5 +48,7 @@ private:
     int depth,screen,connection;
     Window window, rootwindow;
 };
+
+#endif //LINUX
 
 #endif // RENDERWINDOWXORG_H

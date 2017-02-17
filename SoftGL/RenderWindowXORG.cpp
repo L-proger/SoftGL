@@ -1,4 +1,6 @@
 #include "RenderWindowXORG.h"
+
+#if defined(LINUX)
 #include <string.h>
 #include <stdio.h>
 
@@ -197,3 +199,4 @@ void RenderWindowXORG::CenterWindow()
     SetPosition(px, py);
     XFlush(display_name);
 }
+#endif

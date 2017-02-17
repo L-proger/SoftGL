@@ -87,8 +87,8 @@ public:
 	Texture* GetBackBuffer();
 	Texture* GetDepthBuffer();
 
-	void set_color_buffer(Texture* buffer);
-	void set_depth_buffer(Texture* buffer);
+	void setColorBuffer(Texture* buffer);
+	void setDepthBuffer(Texture* buffer);
 
     void SetPrimitiveType(int type);
     void Draw(size_t offset, size_t length);

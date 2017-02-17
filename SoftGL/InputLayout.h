@@ -4,6 +4,7 @@
 #include "LString.h"
 #include "RasterizerSettings.h"
 #include "Debug.h"
+#include <array>
 
 enum class RegType {
 	float1 = 0,

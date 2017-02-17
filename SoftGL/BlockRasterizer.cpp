@@ -158,11 +158,11 @@ Texture* BlockRasterizer::GetDepthBuffer() {
 	return depthBuffer;
 }
 
-void BlockRasterizer::set_color_buffer(Texture* buffer) {
+void BlockRasterizer::setColorBuffer(Texture* buffer) {
 	backBuffer = buffer;
 }
 
-void BlockRasterizer::set_depth_buffer(Texture* buffer) {
+void BlockRasterizer::setDepthBuffer(Texture* buffer) {
 	depthBuffer = buffer;
 }
 

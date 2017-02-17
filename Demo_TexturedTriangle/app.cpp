@@ -1,5 +1,4 @@
 #define WIN32_LEAN_AND_MEAN
-#include "vld.h"
 #include "LString.h"
 #include "Buffer.h"
 #include "IRenderWindow.h"
@@ -62,9 +61,9 @@ int main()
 	auto keyboard = input->keyboards()[1];
 	auto mouse = input->mice()[0];
 
-	//auto tex_normal = texture_utils::LoadTexture(R"(D:\L\development\Resources\Floors\normal.bmp)");
-	//auto tex_diffuse = texture_utils::LoadTexture(R"(D:\L\development\Resources\Floors\diffuse.bmp)");
-	//auto tex_ao = texture_utils::LoadTexture(R"(D:\L\development\Resources\Floors\ao.bmp)");
+	auto tex_normal = texture_utils::LoadTexture(R"(D:\L\development\Resources\Floors\normal.bmp)");
+	auto tex_diffuse = texture_utils::LoadTexture(R"(D:\L\development\Resources\Floors\diffuse.bmp)");
+	auto tex_ao = texture_utils::LoadTexture(R"(D:\L\development\Resources\Floors\ao.bmp)");
 
 	Game_object go;
 	Camera camera(&go);
@@ -72,7 +71,6 @@ int main()
 	CameraController camController(&camera);
 
 	go.transform.SetLocalPosition(float3(0, 1, -10.0f));
-
 
 	RenderWindow* wnd = new RenderWindow();
 	wnd->SetSize(sx, sy);
@@ -109,14 +107,12 @@ int main()
 	rasterizer.SetInputLayout(&layout);
 	rasterizer.SetPrimitiveType(PT_TRIANGLE_LIST);
 
-
-
-	rasterizer.set_color_buffer(&backBuffer);
-	rasterizer.set_depth_buffer(&depthBuffer);
+	rasterizer.setColorBuffer(&backBuffer);
+	rasterizer.setDepthBuffer(&depthBuffer);
 
 	auto vs = VSDefault();
 	auto ps = PSTexturedNoLit();
-	//ps.diffuseMap = tex_diffuse;
+	ps.diffuseMap = tex_diffuse;
 
 
 	rasterizer.SetVertexShader(&vs);
@@ -142,14 +138,14 @@ int main()
 
 		//clear render targets
 		texture_utils::fill<uint32_t>(&backBuffer, 0x00ff0000 );//0x00232327
-		//texture_utils::fill<float>(&depthBuffer, 1.0f);
+		texture_utils::fill<float>(&depthBuffer, 1.0f);
 
 		//setup material
 		vs.mWorld = lm::mul(matrix4x4_scale<float>(10, 10, 10), matrix4x4_rotation(Quaternion_f::angle_axis(-3.1415f/2*0, float3(1,0,0))));
 		vs.mView = camera.world_to_camera_matrix();
 		vs.mProj = camera.GetProjection();
 		
-		//DrawMesh(&rasterizer, &plane);
+		DrawMesh(&rasterizer, &plane);
 
 		//present
 		wnd->Present(&backBuffer);
