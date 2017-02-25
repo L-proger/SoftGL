@@ -8,8 +8,8 @@
 
 using namespace lm;
 
-static constexpr size_t sx = 128;
-static constexpr size_t sy = 64;
+static constexpr size_t sx = 640;
+static constexpr size_t sy = 480;
 alignas(32) MipChain<sizeof(uint32_t), sx, sy, 0> bb_data;
 
 int main()
@@ -31,9 +31,6 @@ int main()
 	writer.texture = &backBuffer;
 
 
-
-
-	
 	 
 	typedef lm::Vector<uint8_t, 4> Color;
 	float time = 0.0f;
@@ -42,13 +39,17 @@ int main()
 		time += 0.001f;
 		wnd->Update();
 
-		auto world = lm::mul(matrix4x4_scale<float>(1, 1, 1), matrix4x4_rotation(Quaternion_f::angle_axis(time, float3(0, 1, 0))));
 
-		auto view = lm::matrix4x4_lookat_lh(float3(0, 1.5, -2), float3(0), float3(0, 1, 0));
-		auto projection = lm::matrix4x4_perspective<float>(3.1415 / 4.0f, (float)sx / (float)sy, 0.1f, 100.0f);
+		auto ms = matrix4x4Scale<float>(1, 1, 1);
+		auto mr = matrix4x4RotationY(Quaternion_f::angle_axis(time, float3(0.0f, 1.0f, 0.0f)));
 
-		float4x4 wv = lm::mul(world, view);
-		float4x4 wvp = lm::mul(wv, projection);
+		auto world = lm::mul(ms, mr);
+
+		auto view = lm::matrix4x4LookatLh(float3(0.0f, 1.5f, -2.0f), float3(0.0f), float3(0.0f, 1.0f, 0.0f));
+		auto projection = lm::matrix4x4Perspective<float>(3.1415f / 4.0f, (float)sx / (float)sy, 0.1f, 100.0f);
+
+		float4x4 vw = lm::mul(view, world);
+		float4x4 pvw = lm::mul(projection, vw);
 
 
 		clear(writer, Color(0));
@@ -72,34 +73,23 @@ int main()
 
 		for (int i = 0; i < sizeof(points) / sizeof(points[i]); ++i) {
 			float4 position(points[i], 1.0f);
-			float4 projected = lm::mul(wvp, position);
-			projected /= projected.w;
-			points[i] = projected.xyz;
-			points[i].y = -points[i].y;
+			float4 projected = lm::mul(pvw, position);
+			projected /= projected[3];
+			points[i] = projected.slice<0,3>();
+			points[i][1] = -points[i][1];
 			points[i] = ((points[i] * 0.5f) + 0.5f);
 
-			points[i].x *= sx;
-			points[i].y *= sy;
+			points[i][0] *= sx;
+			points[i][1] *= sy;
 		}
 
 		for (int i = 0; i < sizeof(indices) / sizeof(indices[i]); i += 2) {
 			float3 p0 = points[indices[i]];
 			float3 p1 = points[indices[i + 1]];
-
-	
-			drawLine((int32_t)p0.x, (int32_t)p0.y, (int32_t)p1.x, (int32_t)p1.y, writer, Color(255, 255, 255, 255));
+			drawLine((int32_t)p0[0], (int32_t)p0[1], (int32_t)p1[0], (int32_t)p1[1], writer, Color((uint8_t)255U, (uint8_t)255U, (uint8_t)255U, (uint8_t)255U));
 		}
 
-		/*int rays = 30;
-
-		for (int i = 0; i < rays; ++i) {
-			float angle = ((3.14159265358979f * 2.0f) / (float)rays) * (float)i;
-			float radius = 100;
-			float x = sinf(angle + time) * radius + 200;
-			float y = cosf(angle + time) * radius + 200;
-
-			drawLine(200, 200, x, y, writer, Color(255, 255, 255, 255));
-		}*/
+		drawCircle(320, 240, 100, writer, Color((uint8_t)255, (uint8_t)255, (uint8_t)255, (uint8_t)255));
 
 		
 
