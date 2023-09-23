@@ -1,19 +1,17 @@
-#ifndef IRenderWindow_h__
-#define IRenderWindow_h__
-
+#pragma once
 
 #include "LString.h"
 #include "DisplayMode.h"
 #include <cstdint>
+#include <cstddef>
 #include "Texture.h"
-
 
 class IRenderWindow{
 public:
 	virtual ~IRenderWindow(void) {}
 	virtual void Update() = 0;
 	virtual void SetCaption(const String& caption) = 0;
-	virtual int GetWindowHandle() = 0;
+	virtual std::size_t GetWindowHandle() = 0;
 	virtual int GetWidth() = 0;
 	virtual int GetHeight() = 0;
     virtual int GetTop() = 0;
@@ -51,4 +49,3 @@ protected:
 	String caption;
 	DisplayMode fsMode;
 };
-#endif // IRenderWindow_h__

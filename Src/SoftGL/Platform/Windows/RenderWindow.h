@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string>
-#include "IRenderWindow.h"
+#include <SoftGL/IRenderWindow.h>
 
 class RenderWindow : public IRenderWindow {
 public:
@@ -22,7 +22,7 @@ public:
 	~RenderWindow(void);
 	void Update();
 	void SetCaption(const String& caption);
-	int GetWindowHandle() { return (int)g_hwnd; }
+	std::size_t GetWindowHandle() { return (std::size_t)g_hwnd; }
 	void SetSize(int w, int h);
 	bool IsFullScreen();
 	void SetFullScreen(bool state);

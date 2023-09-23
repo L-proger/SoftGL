@@ -1,8 +1,7 @@
-#ifndef cube_generator_h__
-#define cube_generator_h__
+#pragma once
 
 #include "imesh.h"
-#include "lmath.h"
+#include <LMath/lmath.h>
 
 #include <iostream>
 
@@ -90,4 +89,3 @@ struct CubeGenerator {
 		return true;
 	}
 };
-#endif // cube_generator_h__

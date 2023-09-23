@@ -1,8 +1,7 @@
-#ifndef imesh_h__
-#define imesh_h__
+#pragma once
 
-#include "Buffer.h"
-#include "static_vector.h"
+#include <SoftGL/Buffer.h>
+#include <SoftGL/static_vector.h>
 
 class IMesh {
 public:
@@ -10,4 +9,3 @@ public:
 	virtual size_t GetSubmeshCount() const = 0;
 	virtual Buffer* GetSubmeshBuffer(size_t id) const = 0;
 };
-#endif // imesh_h__

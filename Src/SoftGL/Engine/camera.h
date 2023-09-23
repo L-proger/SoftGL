@@ -1,7 +1,6 @@
-#ifndef camera_h__
-#define camera_h__
+#pragma once
 
-#include "lmath.h"
+#include <LMath/lmath.h>
 #include "gameobject.h"
 
 class Camera {
@@ -13,7 +12,7 @@ public:
 
 	lm::float4x4 world_to_camera_matrix(){
 		auto tf = _object->transform.get_global_transform();
-		return lm::matrix4x4_inverse(tf, false);
+		return lm::inverse(tf, false);
 	}
 	Game_object* GameObject()
 	{
@@ -52,7 +51,7 @@ public:
 	}
 private:
 	void UpdateProjection(){
-		_projection = lm::matrix4x4_perspective(_fov, _aspect, _zNear, _zFar);
+		_projection = lm::matrix4x4Perspective(_fov, _aspect, _zNear, _zFar);
 	}
 	float _fov;
 	float _zNear;
@@ -61,4 +60,3 @@ private:
 	float4x4 _projection;
 	Game_object* _object;
 };
-#endif // camera_h__

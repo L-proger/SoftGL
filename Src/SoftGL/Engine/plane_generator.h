@@ -1,8 +1,7 @@
-#ifndef plane_generator_h__
-#define plane_generator_h__
+#pragma once
 
 #include "imesh.h"
-#include "lmath.h"
+#include <LMath/lmath.h>
 
 using namespace lm;
 
@@ -12,7 +11,7 @@ struct PlaneGenerator {
 	static constexpr size_t IndexCount = 6;
 
 	static constexpr float4 Corner(size_t id) {
-		return float4(id % 2 == 0 ? -1.0f : 1.0f, 0, (id % 4) < 2 ? 1.0f : -1.0f, 1.0f);
+		return float4(id % 2 == 0 ? -1.0f : 1.0f, 0.0f, (id % 4) < 2 ? 1.0f : -1.0f, 1.0f);
 	}
 
 	static bool Generate(IMesh* m) {
@@ -31,19 +30,19 @@ struct PlaneGenerator {
 		}
 
 		static constexpr std::array<float3, 6> normals = {
-			float3(1,0,0),
-			float3(-1,0,0),
-			float3(0,1,0),
-			float3(0,-1,0),
-			float3(0,0,1),
-			float3(0,0,-1)
+			float3(1.0f,0.0f,0.0f),
+			float3(-1.0f,0.0f,0.0f),
+			float3(0.0f,1.0f,0.0f),
+			float3(0.0f,-1.0f,0.0f),
+			float3(0.0f,0.0f,1.0f),
+			float3(0.0f,0.0f,-1.0f)
 		};
 
 		static constexpr float2 uvs[4] = {
-			float2(0,0),
-			float2(1,0),
-			float2(0,1),
-			float2(1,1)
+			float2(0.0f, 0.0f),
+			float2(1.0f, 0.0f),
+			float2(0.0f, 1.0f),
+			float2(1.0f, 1.0f)
 		};
 
 		static constexpr size_t planeIndices[6] = {
@@ -57,7 +56,7 @@ struct PlaneGenerator {
 		for (size_t j = 0; j < 4; ++j) {
 			auto& vertex = vertices[j];
 			vertex.Position = Corner(j);
-			vertex.Normal = float3::up();
+			vertex.Normal = float3(0.0f, 1.0f, 0.0f);
 			vertex.UV0 = uvs[j];
 		}
 
@@ -69,4 +68,3 @@ struct PlaneGenerator {
 		return true;
 	}
 };
-#endif // plane_generator_h__

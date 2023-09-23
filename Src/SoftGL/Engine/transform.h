@@ -1,7 +1,6 @@
-#ifndef transform_h__
-#define transform_h__
+#pragma once
 
-#include "lmath.h"
+#include <LMath/lmath.h>
 
 using namespace lm;
 
@@ -31,15 +30,15 @@ public:
 	}
 
 	float3 Forward() const {
-		return get_global_transform().rows[2].xyz;
+		return get_global_transform()[2].xyz();
 	}
 
 	float3 right() const {
-		return get_global_transform().rows[0].xyz;
+		return get_global_transform()[0].xyz();
 	}
 
 	float3 up() const {
-		return get_global_transform().rows[1].xyz;
+		return get_global_transform()[1].xyz();
 	}
 
 	void set_local_rotation(const Quaternion_f& rotation) {
@@ -59,9 +58,9 @@ public:
 	}
 
 	float4x4 get_local_transform() const {
-		float4x4 scaleMatrix = matrix4x4_scale(_scale);
-		float4x4 rotationMatrix = matrix4x4_rotation(_rotation);
-		float4x4 positionMatrix = matrix4x4_translation(_position);
+		float4x4 scaleMatrix = matrix4x4Scale(_scale);
+		float4x4 rotationMatrix = matrix4x4RotationQuaternion(_rotation);
+		float4x4 positionMatrix = matrix4x4Translation(_position);
 		return lm::mul(lm::mul(scaleMatrix, rotationMatrix), positionMatrix);
 	}
 
@@ -74,7 +73,7 @@ public:
 
 	float3 get_global_position() {
 		auto tf = get_global_transform();
-		return float3(tf.data_2d[3][0], tf.data_2d[3][1], tf.data_2d[3][2]);
+		return float3(tf[3][0], tf[3][1], tf[3][2]);
 	}
 
 	void RotateLocal(const Quaternion_f& rotation) {
@@ -83,6 +82,3 @@ public:
 private:
 	Game_object* _game_object;
 };
-
-
-#endif // transform_h__

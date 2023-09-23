@@ -1,23 +1,17 @@
-#ifndef Vertex_h__
-#define Vertex_h__
+#pragma once
 
-#include "lmath.h"
+#include <LMath/lmath.h>
 
-using namespace lm;
-
-#pragma pack(push, 1)
 struct Vertex {
-	float4 Position;
-	float3 Normal;
-	float2 UV0;
+	lm::float4 Position;
+	lm::float3 Normal;
+	lm::float2 UV0;
 
 	Vertex() {
 
 	}
-	Vertex(const float4& pos, const float2& tc) {
+	Vertex(const lm::float4& pos, const lm::float2& tc) {
 		Position = pos;
 		UV0 = tc;
 	}
 };
-#pragma pack(pop)
-#endif // Vertex_h__

@@ -1,10 +1,8 @@
 #include "RenderWindow.h"
-#include <winuser.h>
 
-#ifdef WIN32
-#define L_WIN32
-#include <winuser.h>
 
+#include <Windows.h>
+#include <WinUser.h>
 
 RenderWindow::RenderWindow()
 	:UpdateCamera(false) {
@@ -57,7 +55,7 @@ RenderWindow::RenderWindow()
 
 	if (!(g_hwnd = CreateWindowEx(NULL, _text("Onotole"), _text("LifeEngine render window"), WS_OVERLAPPEDWINDOW,
 		NewWindowSize.left, NewWindowSize.top, NewWindowSize.right - NewWindowSize.left, NewWindowSize.bottom - NewWindowSize.top, NULL, NULL, g_hInst, NULL))) {
-		MessageBox(g_hwnd, _text("Can not create window! We all gonna die!!"), _text("HOLY SHIT!"), MB_OK);
+		MessageBox(g_hwnd, _text("Can not create window!"), _text("Can not create window!"), MB_OK);
 		return;
 	}
 
@@ -71,8 +69,8 @@ RenderWindow::RenderWindow()
 	EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &mode);
 
 	RenderWindow* ptr = this;
-	long val = (long)ptr;
-	SetWindowLongPtr(g_hwnd, GWL_USERDATA, val);
+	LONG_PTR val = (LONG_PTR)ptr;
+	SetWindowLongPtr(g_hwnd, GWLP_USERDATA, val);
 
 	fsMode.width = 640;
 	fsMode.height = 480;
@@ -232,9 +230,9 @@ LRESULT __stdcall RenderWindow::WndProc(HWND hwnd, UINT message, WPARAM wparam, 
 	switch (message) {
 	case WM_SIZE:
 	{
-		//не ресайзим девайс если окно свёрнуто
+		
 		if (wparam != SIZE_MINIMIZED) {
-			long val = GetWindowLongPtr(hwnd, GWL_USERDATA);
+			LONG_PTR val = GetWindowLongPtr(hwnd, GWLP_USERDATA);
 			if (val) {
 				RenderWindow* wnd = (RenderWindow*)val;
 				wnd->OnResize();
@@ -247,7 +245,7 @@ LRESULT __stdcall RenderWindow::WndProc(HWND hwnd, UINT message, WPARAM wparam, 
 		static bool hiddencursor = false;
 		WORD ht = LOWORD(lparam);
 
-		long val = GetWindowLongPtr(hwnd, GWL_USERDATA);
+		LONG_PTR val = GetWindowLongPtr(hwnd, GWLP_USERDATA);
 		if (val) {
 			RenderWindow* wnd = (RenderWindow*)val;
 			if (wnd->IsCursorVisible()) {
@@ -272,7 +270,7 @@ LRESULT __stdcall RenderWindow::WndProc(HWND hwnd, UINT message, WPARAM wparam, 
 		switch (wparam) {
 		case WA_ACTIVE:
 		{
-			long val = GetWindowLongPtr(hwnd, GWL_USERDATA);
+			LONG_PTR val = GetWindowLongPtr(hwnd, GWLP_USERDATA);
 			if (val) {
 				RenderWindow* wnd = (RenderWindow*)val;
 				wnd->OnActivate();
@@ -281,7 +279,7 @@ LRESULT __stdcall RenderWindow::WndProc(HWND hwnd, UINT message, WPARAM wparam, 
 		break;
 		case WA_INACTIVE:
 		{
-			long val = GetWindowLongPtr(hwnd, GWL_USERDATA);
+			LONG_PTR val = GetWindowLongPtr(hwnd, GWLP_USERDATA);
 			if (val) {
 				RenderWindow* wnd = (RenderWindow*)val;
 				wnd->OnDeactivate();
@@ -301,7 +299,7 @@ LRESULT __stdcall RenderWindow::WndProc(HWND hwnd, UINT message, WPARAM wparam, 
 		{
 			if (GetKeyState(VK_MENU)) //Alt + Enter
 			{
-				long val = GetWindowLongPtr(hwnd, GWL_USERDATA);
+				LONG_PTR val = GetWindowLongPtr(hwnd, GWLP_USERDATA);
 				if (val) {
 
 					RenderWindow* wnd = (RenderWindow*)val;
@@ -320,7 +318,7 @@ LRESULT __stdcall RenderWindow::WndProc(HWND hwnd, UINT message, WPARAM wparam, 
 		switch (wparam) {
 		case VK_RETURN:
 		{
-			long val = GetWindowLongPtr(hwnd, GWL_USERDATA);
+			LONG_PTR val = GetWindowLongPtr(hwnd, GWLP_USERDATA);
 			if (val) {
 
 				RenderWindow* wnd = (RenderWindow*)val;
@@ -335,7 +333,7 @@ LRESULT __stdcall RenderWindow::WndProc(HWND hwnd, UINT message, WPARAM wparam, 
 		switch (wparam) {
 		case VK_SPACE:
 		{
-			long val = GetWindowLongPtr(hwnd, GWL_USERDATA);
+			LONG_PTR val = GetWindowLongPtr(hwnd, GWLP_USERDATA);
 			if (val) {
 				RenderWindow* wnd = (RenderWindow*)val;
 				wnd->UpdateCamera = !wnd->UpdateCamera;
@@ -351,5 +349,3 @@ LRESULT __stdcall RenderWindow::WndProc(HWND hwnd, UINT message, WPARAM wparam, 
 	return DefWindowProc(hwnd, message, wparam, lparam);
 }
 
-
-#endif

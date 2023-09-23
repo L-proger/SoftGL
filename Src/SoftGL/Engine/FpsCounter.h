@@ -1,19 +1,22 @@
-#ifndef FpsCounter_h__
-#define FpsCounter_h__
+#pragma once
 
-#include "stopwatch.h"
+#include <chrono>
+
 
 template<size_t AveragingFramesCount = 20>
 class FpsCounter
 {
 public:
-	typedef LFramework::Stopwatch::clock_t::duration duration_t;
+
+	using Clock = std::chrono::steady_clock;
+	using Duration = std::chrono::steady_clock::duration;
+	using TimePoint = std::chrono::steady_clock::time_point;
 
 	FpsCounter():position(0),avgFps(0) {
-		_lastClock = _sw.Check();
+		_lastClock = Clock::now();
 		timeElapsed = timeElapsed.zero();
 		for (size_t i = 0; i < AveragingFramesCount; ++i) {
-			_buffer[i] = duration_t::zero();
+			_buffer[i] = {};
 		}
 	}
 	~FpsCounter()
@@ -21,14 +24,14 @@ public:
 
 	}
 	void ComputeFPS(){
-		auto nowTime = _sw.Check();
+		auto nowTime = Clock::now();
 		timeElapsed = nowTime - _lastClock;
 		_lastClock = nowTime;
 
 		_buffer[position] = timeElapsed;
 		position = (position + 1) % AveragingFramesCount;
 
-		duration_t sum = duration_t::zero();
+		Duration sum = {};
 		for (size_t i = 0; i < AveragingFramesCount; ++i) {
 			sum += _buffer[i];
 		}
@@ -54,15 +57,13 @@ public:
 	float GetFrameTimeSeconds() const {
 		return (float)std::chrono::duration_cast<std::chrono::microseconds>(timeElapsed).count() / 1000000.0f;
 	}
-	duration_t GetTimeElapsed() const {
+	Duration GetTimeElapsed() const {
 		return timeElapsed;
 	}
 private:
-	LFramework::Stopwatch _sw;
-	duration_t _lastClock;
-	duration_t timeElapsed;
+	TimePoint _lastClock;
+	Duration timeElapsed;
 	float avgFps;
-	duration_t _buffer[AveragingFramesCount];
+	Duration _buffer[AveragingFramesCount];
 	int position;
 };
-#endif // FpsCounter_h__
