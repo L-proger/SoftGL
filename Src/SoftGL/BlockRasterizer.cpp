@@ -268,9 +268,9 @@ void BlockRasterizer::draw_impl(void* v0, void* v1, void* v2)
 	int numInterpolators = vs->Execute(&r2_in[0], &r2_out.reg[0]);
 
 
-	r0_out.reg[0].y() = -r0_out.reg[0].y();
-	r1_out.reg[0].y() = -r1_out.reg[0].y();
-	r2_out.reg[0].y() = -r2_out.reg[0].y();
+	//r0_out.reg[0].y() = -r0_out.reg[0].y();
+	//r1_out.reg[0].y() = -r1_out.reg[0].y();
+	//r2_out.reg[0].y() = -r2_out.reg[0].y();
 
 	ClipVector cv;
 	ClipFace cf;

@@ -6,7 +6,7 @@
 class Camera {
 public:
 	Camera(Game_object* object):
-		_fov(3.1415f/4.0f), _zNear(0.3f), _zFar(100.0f), _aspect(4.0f/3.0f), _object(object){
+		_fov(3.1415f/4.0f), _zNear(0.3f), _zFar(100.0f), _aspect(1.0f), _object(object){
 		UpdateProjection();
 	}
 

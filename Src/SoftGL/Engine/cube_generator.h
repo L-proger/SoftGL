@@ -50,19 +50,19 @@ struct CubeGenerator {
 		};
 
 		static constexpr std::array<float3, 6> normals = {
-			float3(1,0,0),
-			float3(-1,0,0),
-			float3(0,1,0),
-			float3(0,-1,0),
-			float3(0,0,1),
-			float3(0,0,-1)
+			float3(1.0f,0.0f,0.0f),
+			float3(-1.0f,0.0f,0.0f),
+			float3(0.0f,1.0f,0.0f),
+			float3(0.0f,-1.0f,0.0f),
+			float3(0.0f,0.0f,1.0f),
+			float3(0.0f,0.0f,-1.0f)
 		};
 
 		static constexpr float2 uvs[4] = {
-			float2(0,0),
-			float2(1,0),
-			float2(1,1),
-			float2(0,1)
+			float2(0.0f,0.0f),
+			float2(1.0f,0.0f),
+			float2(1.0f,1.0f),
+			float2(0.0f,1.0f)
 		};
 
 		static constexpr size_t indexMap[6] = {

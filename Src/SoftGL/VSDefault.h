@@ -18,8 +18,8 @@ public:
 	}
 	int Execute(float4** input, float4* output)
 	{
-		float4x4 wv = lm::mul(mWorld, mView);
-		float4x4 wvp = lm::mul(wv, mProj);
+		float4x4 wv = lm::mul(mView, mWorld);
+		float4x4 wvp = lm::mul(mProj, wv);
 
 		float4 position = *input[0];
 		position.w() = 1.0f;
