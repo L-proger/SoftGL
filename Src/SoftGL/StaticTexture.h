@@ -1,14 +1,15 @@
-#ifndef StaticTexture_h__
-#define StaticTexture_h__
+#pragma once
 
 #include "mip_utils.h"
 #include "Texture.h"
 #include <vector>
+#include <array>
 
 template<size_t _BytesPerPixel, size_t _Width, size_t _Height, size_t _MaxMip = -1, size_t CurrentMip = 0, bool _lastMip = ((_Width == 1) && (_Height == 1)) || (CurrentMip == _MaxMip)>
 struct MipChain : MipChain<_BytesPerPixel, MipUtils::SmallerMipSize(_Width), MipUtils::SmallerMipSize(_Height), _MaxMip, CurrentMip + 1> {
 	static constexpr auto Width = _Width;
 	static constexpr auto Height = _Height;
+	static constexpr auto BytesPerPixel = _BytesPerPixel;
 	static_assert(MipUtils::IsValidMipSize(_Width), "Invalid MIP width, must be power of 2");
 	static_assert(MipUtils::IsValidMipSize(_Height), "Invalid MIP height, must be power of 2");
 	std::array<uint8_t, _Width * _Height * _BytesPerPixel> data;
@@ -22,9 +23,11 @@ struct MipChain<_BytesPerPixel, _Width, _Height, _MaxMip, CurrentMip, true> {
 	const void* GetPointer() const {
 		return &data[0];
 	}
+
 	static constexpr size_t MipsCount = CurrentMip + 1;
 	static constexpr auto Width = _Width;
 	static constexpr auto Height = _Height;
+	static constexpr auto BytesPerPixel = _BytesPerPixel;
 	std::array<uint8_t, _Width * _Height * _BytesPerPixel> data;
 };
 
@@ -81,5 +84,3 @@ public:
 private:
 	_DataPointer _data;
 };
-
-#endif // StaticTexture_h__
