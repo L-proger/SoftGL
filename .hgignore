@@ -1,7 +1,0 @@
-syntax: glob
-Debug/
-*.user
-*.filters
-*.suo
-*.opendb
-*.db
