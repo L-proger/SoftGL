@@ -22,14 +22,18 @@ public:
 		float4x4 wvp = lm::mul(wv, mProj);
 
 		float4 position = *input[0];
-		position.w = 1.0f;
+		position.w() = 1.0f;
 
-		float3x3 world = (float3x3)mWorld;
+		float3x3 world;
+		world[0] = mWorld[0].xyz();
+		world[1] = mWorld[1].xyz();
+		world[2] = mWorld[2].xyz();
+		
 
 		output[0] = lm::mul(wvp, position);
 		output[1] = *input[1];
-		output[2].xyz = lm::mul(world, (*input[2]).xyz);
-		output[3].xyz = lm::mul(mWorld, position).xyz;
+		output[2].xyz() = lm::mul(world, (*input[2]).xyz());
+		output[3].xyz() = lm::mul(mWorld, position).xyz();
 		return 4;
 	}
 };

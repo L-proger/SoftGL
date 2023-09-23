@@ -1,19 +1,19 @@
 
 
-add_library(SoftGL STATIC)
+add_library(SoftGL INTERFACE)
 
 target_include_directories(SoftGL
-PUBLIC
+INTERFACE
     ../
 )
 
 target_link_libraries(SoftGL
-PUBLIC
+INTERFACE
     LMath
 )
 
 target_sources(SoftGL
-PUBLIC
+INTERFACE
     Bitmap.h
     BlockRasterizer.h
     Buffer.h
@@ -33,6 +33,7 @@ PUBLIC
     mip_utils.h
     PixelShader.h
     PSDefault.h
+    PSDefaultColor.h
     PSFont.h
     PSTextured.h
     RasterizerSettings.h
@@ -52,7 +53,7 @@ PUBLIC
     Viewport.h
     VSDefault.h
     VSScreenSpace.h
-PRIVATE
+INTERFACE
     BlockRasterizer.cpp
  
 )

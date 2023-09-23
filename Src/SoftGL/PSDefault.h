@@ -2,7 +2,7 @@
 #define PSDefault_h__
 
 #include "PixelShader.h"
-#include "lighting_core.h"
+#include <SoftGL/BRDF/lighting_core.h>
 
 class PSDefault : public PixelShader
 {
@@ -17,16 +17,18 @@ public:
 
 	}
 	float4 Execute(float4* input) {
+		using namespace lm;
+
 		//return float4(1, 1, 0, 1);
 		//return float4(input[1].x, input[1].y, 0, 1);
 	
-		float3 lightColor = float3(1, 1, 0.9f);
+		float3 lightColor = float3(1.0f, 1.0f, 0.9f);
 	
 		float3 ambientColor = float3(0.1f, 0.1f, 0.2f);
 
-		float3 N = lm::normalize(input[2].xyz);
+		float3 N = lm::normalize(input[2].xyz());
 		float3 L = lm::normalize(float3(1, 1, 1));
-		float3 V = lm::normalize(camPosition - input[3].xyz);
+		float3 V = lm::normalize(camPosition - input[3].xyz());
 		float3 H = normalize(L + V);
 
 		float NdotL = std::max<float>(0, lm::dot(N, L));
@@ -43,20 +45,20 @@ public:
 
 		float4 diffuse = float4(0, 0, 0, 0);
 		if (diffuse_map != nullptr) {
-			diffuse = tex2D(diffuse_map, input[1].x, input[1].y, TextureFilter::Bilinear);
+			diffuse = tex2D(diffuse_map, input[1].x(), input[1].y(), TextureFilter::Bilinear);
 		};
 
 
 
 
 		float3 result = float3(0, 0, 0);
-		result = diffuse.xyz * (lightColor * diffuse.xyz) * NdotL + lightColor * r_microfacet + ambientColor * diffuse.xyz;
+		result = diffuse.xyz() * (lightColor * diffuse.xyz()) * NdotL + lightColor * r_microfacet + ambientColor * diffuse.xyz();
 
 		result = lm::saturate(result);
 
 		float4 retval;
-		retval.xyz = result;
-		retval.w = diffuse.w;
+		retval.xyz() = result;
+		retval.w() = diffuse.w();
 		return retval;
 	}
 };

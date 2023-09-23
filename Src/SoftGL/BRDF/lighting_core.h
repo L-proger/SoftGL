@@ -1,7 +1,7 @@
 #ifndef lighting_core_h__
 #define lighting_core_h__
 
-#include "lmath.h"
+#include <LMath/lmath.h>
 #include <algorithm>
 
 #ifndef MATH_PI
