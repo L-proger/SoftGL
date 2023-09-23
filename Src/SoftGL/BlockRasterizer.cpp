@@ -268,9 +268,9 @@ void BlockRasterizer::draw_impl(void* v0, void* v1, void* v2)
 	int numInterpolators = vs->Execute(&r2_in[0], &r2_out.reg[0]);
 
 
-	r0_out.reg[0].y = -r0_out.reg[0].y;
-	r1_out.reg[0].y = -r1_out.reg[0].y;
-	r2_out.reg[0].y = -r2_out.reg[0].y;
+	r0_out.reg[0].y() = -r0_out.reg[0].y();
+	r1_out.reg[0].y() = -r1_out.reg[0].y();
+	r2_out.reg[0].y() = -r2_out.reg[0].y();
 
 	ClipVector cv;
 	ClipFace cf;
@@ -331,18 +331,18 @@ float BlockRasterizer::GetBlendAlpha(BLEND_SOURCE src, const float4& srcColor, c
 	case BLEND_ONE:
 		return 1.0f;
 	case BLEND_SRC_ALPHA:
-		return srcColor.w;
+		return srcColor.w();
 	case BLEND_INV_SRC_ALPHA:
-		return 1.0f - srcColor.w;
+		return 1.0f - srcColor.w();
 	}
 	return 0;
 }
 
 uint32_t BlockRasterizer::ConvertColor(const float4& color) {
-	uint32_t r = (uint32_t)(color.x * 255.0f);
-	uint32_t g = (uint32_t)(color.y * 255.0f);
-	uint32_t b = (uint32_t)(color.z * 255.0f);
-	uint32_t a = (uint32_t)(color.w * 255.0f);
+	uint32_t r = (uint32_t)(color.x() * 255.0f);
+	uint32_t g = (uint32_t)(color.y() * 255.0f);
+	uint32_t b = (uint32_t)(color.z() * 255.0f);
+	uint32_t a = (uint32_t)(color.w() * 255.0f);
 
 	return (a << 24) | (r << 16) | (g << 8) | (b);
 }
@@ -385,40 +385,40 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 	RegisterBlock* p2 = &r2_src;
 
 	//p1->reg[0].W = abs(p1->reg[0].W);
-	float iw0 = 1.0f / p0->reg[0].w;
-	float iw1 = 1.0f / p1->reg[0].w;
-	float iw2 = 1.0f / p2->reg[0].w;
+	float iw0 = 1.0f / p0->reg[0].w();
+	float iw1 = 1.0f / p1->reg[0].w();
+	float iw2 = 1.0f / p2->reg[0].w();
 
 	//transform vertices to viewport space
-	p0->reg[0].x = (p0->reg[0].x * iw0) * scrW_h + scrW_h;
-	p0->reg[0].y = (p0->reg[0].y * iw0) * scrH_h + scrH_h;
-	p0->reg[0].z = (p0->reg[0].z * iw0);
+	p0->reg[0].x() = (p0->reg[0].x() * iw0) * scrW_h + scrW_h;
+	p0->reg[0].y() = (p0->reg[0].y() * iw0) * scrH_h + scrH_h;
+	p0->reg[0].z() = (p0->reg[0].z() * iw0);
 
-	p1->reg[0].x = (p1->reg[0].x * iw1) * scrW_h + scrW_h;
-	p1->reg[0].y = (p1->reg[0].y * iw1) * scrH_h + scrH_h;
-	p1->reg[0].z = (p1->reg[0].z * iw1);
+	p1->reg[0].x() = (p1->reg[0].x() * iw1) * scrW_h + scrW_h;
+	p1->reg[0].y() = (p1->reg[0].y() * iw1) * scrH_h + scrH_h;
+	p1->reg[0].z() = (p1->reg[0].z() * iw1);
 
-	p2->reg[0].x = (p2->reg[0].x * iw2) * scrW_h + scrW_h;
-	p2->reg[0].y = (p2->reg[0].y * iw2) * scrH_h + scrH_h;
-	p2->reg[0].z = (p2->reg[0].z * iw2);
+	p2->reg[0].x() = (p2->reg[0].x() * iw2) * scrW_h + scrW_h;
+	p2->reg[0].y() = (p2->reg[0].y() * iw2) * scrH_h + scrH_h;
+	p2->reg[0].z() = (p2->reg[0].z() * iw2);
 
-	float3 camZ(p0->reg[0].z, p1->reg[0].z, p2->reg[0].z);
+	float3 camZ(p0->reg[0].z(), p1->reg[0].z(), p2->reg[0].z());
 
 	bool disableCulling = false;
 	if (disableCulling)
-		if (((p1->reg[0].x - p0->reg[0].x) * (p2->reg[0].y - p0->reg[0].y) - (p1->reg[0].y- p0->reg[0].y) * (p2->reg[0].x - p0->reg[0].x) <= 0)) {
+		if (((p1->reg[0].x() - p0->reg[0].x()) * (p2->reg[0].y() - p0->reg[0].y()) - (p1->reg[0].y() - p0->reg[0].y()) * (p2->reg[0].x() - p0->reg[0].x()) <= 0)) {
 			RegisterBlock* pTmp = p0;
 			p0 = p2;
 			p2 = pTmp;
 		}
 
 
-	const int x0 = (int)std::round(16.0f * p0->reg[0].x);
-	const int x1 = (int)std::round(16.0f * p1->reg[0].x);
-	const int x2 = (int)std::round(16.0f * p2->reg[0].x);
-	const int y0 = (int)std::round(16.0f * p0->reg[0].y);
-	const int y1 = (int)std::round(16.0f * p1->reg[0].y);
-	const int y2 = (int)std::round(16.0f * p2->reg[0].y);
+	const int x0 = (int)std::round(16.0f * p0->reg[0].x());
+	const int x1 = (int)std::round(16.0f * p1->reg[0].x());
+	const int x2 = (int)std::round(16.0f * p2->reg[0].x());
+	const int y0 = (int)std::round(16.0f * p0->reg[0].y());
+	const int y1 = (int)std::round(16.0f * p1->reg[0].y());
+	const int y2 = (int)std::round(16.0f * p2->reg[0].y());
 
 	const int Dx01 = x0 - x1;
 	const int Dx12 = x1 - x2;
@@ -518,14 +518,14 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 	float2 derivZW_X;
 	float2 derivZW_Y;
 
-	float2 p0zw = p0->reg[0].zw;
-	p0zw.y = 1.0f / p0zw.y;
+	float2 p0zw = p0->reg[0].zw();
+	p0zw.y() = 1.0f / p0zw.y();
 
-	float2 p1zw = p1->reg[0].zw;
-	p1zw.y = 1.0f / p1zw.y;
+	float2 p1zw = p1->reg[0].zw();
+	p1zw.y() = 1.0f / p1zw.y();
 
-	float2 p2zw = p2->reg[0].zw;
-	p2zw.y = 1.0f / p2zw.y;
+	float2 p2zw = p2->reg[0].zw();
+	p2zw.y() = 1.0f / p2zw.y();
 
 	CalcDerivatives<8, float2>(diy10, diy20, dix10, dix20, p0zw, p1zw, p2zw, derivZW_X, derivZW_Y);
 
@@ -581,7 +581,7 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 						float2 zw = p0zw + derivZW_X * ddx0 + derivZW_Y * ddy0;
 
 						//interpolate Z
-						float z_interp = zw.x;
+						float z_interp = zw.x();
 
 						if(zBuffer[bx] > z_interp)
 						{
@@ -589,7 +589,7 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 							//interpolate registers
 
 							for (int r = 1; r < REG_COUNT; r++) {
-								r_ps.reg[r] = (var00.reg[r] + triDerivX.reg[r] * (bx - x)) / zw.y;
+								r_ps.reg[r] = (var00.reg[r] + triDerivX.reg[r] * (bx - x)) / zw.y();
 							}
 
 							/*for (int r = 1; r < REG_COUNT; r++) {
@@ -638,14 +638,14 @@ void BlockRasterizer::DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, R
 							auto ddy0 = (by - iy0);
 							float2 zw = p0zw + derivZW_X * ddx0 + derivZW_Y * ddy0;
 
-							float z_interp = zw.x;
+							float z_interp = zw.x();
 
 							if (zBuffer[bx] > z_interp) {
 								zBuffer[bx] = z_interp;
 								//interpolate registers
 								for (int r = 1; r < REG_COUNT; r++) {
 									r_ps.reg[r] = invRegs[0].reg[r] + triDerivX.reg[r] * ddx0 + triDerivY.reg[r] * ddy0;
-									r_ps.reg[r] /= zw.y;//add perspective correction
+									r_ps.reg[r] /= zw.y();//add perspective correction
 								}
 
 								float4 rst;

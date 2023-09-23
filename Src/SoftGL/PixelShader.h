@@ -4,7 +4,7 @@
 #include "IShader.h"
 #include "Texture.h"
 #include <cstdint>
-#include "lmath.h"
+#include <LMath/lmath.h>
 
 using namespace lm;
 

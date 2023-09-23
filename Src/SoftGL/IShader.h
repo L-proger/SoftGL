@@ -3,7 +3,7 @@
 
 #include "LString.h"
 #include <vector>
-#include "lmath.h"
+#include <LMath/lmath.h>
 
 using namespace lm;
 using namespace std;

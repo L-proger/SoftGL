@@ -16,7 +16,7 @@
 #include <array>
 #include "Debug.h"
 #include "RegisterBlock.h"
-#include "lmath.h"
+#include <LMath/lmath.h>
 
 using namespace lm;
 

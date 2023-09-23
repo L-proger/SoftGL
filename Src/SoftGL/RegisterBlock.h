@@ -1,7 +1,7 @@
 #ifndef RegisterBlock_h__
 #define RegisterBlock_h__
 
-#include "lmath.h"
+#include <LMath/lmath.h>
 #include <array>
 
 using namespace lm;
