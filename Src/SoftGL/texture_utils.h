@@ -6,8 +6,37 @@
 #include "StaticTexture.h"
 #include "Bitmap.h"
 #include <intrin.h>
+#include <LMath/lmath.h>
 
 struct texture_utils {
+
+	template<typename SrcAccessor, typename DstAccessor>
+	static bool copy(Texture* src, Texture* dst) {
+		auto srcDesc = src->Desc();
+		auto dstDesc = dst->Desc();
+
+		if (srcDesc.Width != dstDesc.Width || (srcDesc.Height != dstDesc.Height)) {
+			return false;
+		}
+
+
+		auto* srcPtr = reinterpret_cast<const SrcAccessor::PixelDataType*>(src->LockRead());
+		auto* dstPtr = reinterpret_cast<DstAccessor::PixelDataType*>(dst->LockWrite());
+
+		for (size_t y = 0; y < srcDesc.Height; ++y) {
+			for (size_t x = 0; x < srcDesc.Width; ++x) {
+				lm::float4 srcDataf = SrcAccessor::ConvertColor(srcPtr[x]);
+				auto dstColor = DstAccessor::ConvertColor(srcDataf);
+				dstPtr[x] = dstColor;
+			}
+			srcPtr += srcDesc.Width;
+			dstPtr += srcDesc.Width;
+		}
+
+		return true;
+	}
+
+
 	template<typename T>
 	static void fill(Texture* tex, T pixel_value) {
 		if (tex == nullptr) {
