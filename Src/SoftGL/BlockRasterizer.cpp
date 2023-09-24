@@ -28,6 +28,10 @@ BlockRasterizer::~BlockRasterizer() {
 
 }
 
+
+
+
+
 bool BlockRasterizer::ClipToFrustumPlane(RasterizerPlane plane, ClipVector& src, ClipVector& dst, size_t regCount) {
 	auto face_count = src.size();
 	bool clipped = false;
@@ -112,8 +116,9 @@ bool BlockRasterizer::ClipToFrustumPlane(RasterizerPlane plane, ClipVector& src,
 }
 
 void BlockRasterizer::ClipToFrustum(ClipFace face, ClipVector& dst, size_t regCount) {
-	ClipVector cv1, cv2;
-
+	
+	cv1.clear();
+	cv2.clear();
 
 	dst.clear();
 
@@ -376,23 +381,4 @@ float4 BlockRasterizer::ConvertColor(uint32_t color) {
 
 	return float4(r, g, b, a);
 }
-
-template<size_t _BlockSize, typename _Var>
-inline void CalcDerivatives(
-	int dy10, int dy20,
-	int dx10, int dx20,
-	_Var z0, _Var z1, _Var z2, _Var& ddx, _Var& ddy) {
-
-	const auto dc10 = z1 - z0;
-	const auto dc20 = z2 - z0;
-
-	//(iy1 - iy0)
-	auto A = dc20 * dy10 - dc10 * dy20;
-	auto B = dc10 * dx20 - dc20 * dx10;
-	int C = dy20 * dx10 - dx20 * dy10;
-
-	ddx = A / (float)-C;
-	ddy = B / (float)-C;
-}
-
 

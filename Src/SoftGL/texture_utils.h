@@ -5,7 +5,7 @@
 
 #include "StaticTexture.h"
 #include "Bitmap.h"
-#include <intrin.h>
+//#include <intrin.h>
 #include <LMath/lmath.h>
 
 struct texture_utils {
@@ -20,8 +20,8 @@ struct texture_utils {
 		}
 
 
-		auto* srcPtr = reinterpret_cast<const SrcAccessor::PixelDataType*>(src->LockRead());
-		auto* dstPtr = reinterpret_cast<DstAccessor::PixelDataType*>(dst->LockWrite());
+		auto* srcPtr = reinterpret_cast<const typename SrcAccessor::PixelDataType*>(src->LockRead());
+		auto* dstPtr = reinterpret_cast<typename DstAccessor::PixelDataType*>(dst->LockWrite());
 
 		for (size_t y = 0; y < srcDesc.Height; ++y) {
 			for (size_t x = 0; x < srcDesc.Width; ++x) {
@@ -38,13 +38,14 @@ struct texture_utils {
 
 
 	template<typename T>
-	static void fill(Texture* tex, T pixel_value) {
+	static bool fill(Texture* tex, T pixel_value) {
 		if (tex == nullptr) {
-			return;
+			return false;
 		}
 
 		if (tex->Desc().BytesPerPixel != sizeof(T)) {
-			throw std::exception("Invalid pixel value specified");
+			//throw std::exception("Invalid pixel value specified");
+			return false;
 		}
 
 		auto data = (T*)tex->LockWrite();
@@ -93,6 +94,7 @@ struct texture_utils {
 		/*for (size_t i = 0; i < tex->Desc().Width * tex->Desc().Height; ++i) {
 			data[i] = pixel_value;
 		}*/
+		return true;
 	}
 
 	static Texture* LoadTexture(const std::string& path) {

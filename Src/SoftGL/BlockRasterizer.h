@@ -105,6 +105,7 @@ public:
 
     float GetBlendAlpha(BLEND_SOURCE src, const float4& srcColor, const float4& dstColor);
 private:
+	ClipVector cv1, cv2;
 	void draw_impl(void* v0, void* v1, void* v2);
 
     IRenderWindow* render_window;
@@ -112,6 +113,26 @@ private:
 
     uint32_t ConvertColor(const float4& color);
     float4 ConvertColor(uint32_t color);
+
+
+	template<size_t _BlockSize, typename _Var>
+	inline void CalcDerivatives(
+		int dy10, int dy20,
+		int dx10, int dx20,
+		_Var z0, _Var z1, _Var z2, _Var& ddx, _Var& ddy) {
+
+		const auto dc10 = z1 - z0;
+		const auto dc20 = z2 - z0;
+
+		//(iy1 - iy0)
+		auto A = dc20 * dy10 - dc10 * dy20;
+		auto B = dc10 * dx20 - dc20 * dx10;
+		int C = dy20 * dx10 - dx20 * dy10;
+
+		ddx = A / (float)-C;
+		ddy = B / (float)-C;
+	}
+
 
 	template<typename ColorDataAccessor>
 	void DrawTriangle(RegisterBlock r0_src, RegisterBlock r1_src, RegisterBlock r2_src) {

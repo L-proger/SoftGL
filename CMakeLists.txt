@@ -70,9 +70,15 @@ INTERFACE
 
     Src/SoftGL/ImageDataAccessorR5G6B5.h
     Src/SoftGL/ImageDataAccessorR8G8B8.h
-
-    Src/SoftGL/Platform/Windows/RenderWindow.cpp
 INTERFACE
     Src/SoftGL/BlockRasterizer.cpp
  
 )
+
+
+if (WIN32)
+    target_sources(SoftGL
+    INTERFACE
+        Src/SoftGL/Platform/Windows/RenderWindow.cpp
+    )
+endif (WIN32)
