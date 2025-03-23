@@ -17,7 +17,7 @@ public:
 		_data = new T[_size / sizeof(T)];
 		memcpy(&_data[0], &v._data[0], _size);
 	}
-	dynamic_buffer(const dynamic_buffer&& v) {
+	dynamic_buffer(dynamic_buffer&& v) {
 		_size = v._size;
 		_data = v._data;
 
